@@ -214,7 +214,9 @@ const AuthPage = () => {
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAdminErrors({});
-    const result = loginSchema.safeParse({ email: adminEmail, password: adminPassword });
+    const rawEmail = adminEmail.trim();
+    const effectiveEmail = rawEmail.toLowerCase() === "admin" ? ADMIN_EMAIL : rawEmail;
+    const result = loginSchema.safeParse({ email: effectiveEmail, password: adminPassword });
     if (!result.success) {
       const errs: Record<string, string> = {};
       result.error.errors.forEach((err) => { errs[err.path[0] as string] = err.message; });
@@ -223,20 +225,20 @@ const AuthPage = () => {
     }
 
     // Do not allow regular user to log in in the admin login place
-    if (!isUserAdmin(adminEmail.trim())) {
+    if (!isUserAdmin(effectiveEmail)) {
       toast({
         title: "Access Denied",
         description: "This portal is for administrators only. Regular users cannot log in here. Please use the User Login tab.",
         variant: "destructive",
       });
-      setLoginEmail(adminEmail.trim());
+      setLoginEmail(effectiveEmail);
       setActiveTab("login");
       return;
     }
 
     setAdminLoading(true);
     const { error, isAdmin: adminConfirmed } = await signInAsAdmin({
-      email: adminEmail.trim(),
+      email: effectiveEmail,
       password: adminPassword,
     });
     setAdminLoading(false);

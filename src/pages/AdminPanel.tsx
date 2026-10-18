@@ -781,12 +781,14 @@ const AdminPanel = () => {
   const handleAdminPortalLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setPortalError("");
-    if (!portalEmail.trim() || !portalPassword) {
+    const rawEmail = portalEmail.trim();
+    const effectiveEmail = rawEmail.toLowerCase() === "admin" ? ADMIN_EMAIL : rawEmail;
+    if (!effectiveEmail || !portalPassword) {
       setPortalError("Please enter both email and password.");
       return;
     }
     setPortalLoading(true);
-    const { error, isAdmin: adminConfirmed } = await signInAsAdmin(portalEmail.trim(), portalPassword);
+    const { error, isAdmin: adminConfirmed } = await signInAsAdmin(effectiveEmail, portalPassword);
     setPortalLoading(false);
     if (error || !adminConfirmed) {
       const msg = error?.message || "This account does not have administrator privileges.";
