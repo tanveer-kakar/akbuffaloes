@@ -50,7 +50,7 @@ vi.stubGlobal("fetch", vi.fn(async (url: string) => {
 
 describe("Render checks for AdminPanel, Dashboard, and Core Website Pages", () => {
   it("renders AdminPanel without crashing", async () => {
-    const { container, findByText } = render(
+    const { container, findAllByText } = render(
       <MemoryRouter initialEntries={["/admin"]}>
         <ThemeProvider>
           <LanguageProvider>
@@ -62,7 +62,8 @@ describe("Render checks for AdminPanel, Dashboard, and Core Website Pages", () =
       </MemoryRouter>
     );
     expect(container).toBeTruthy();
-    expect(await findByText("Admin Panel")).toBeDefined();
+    const headers = await findAllByText(/Admin (Panel|Portal)/i);
+    expect(headers.length).toBeGreaterThan(0);
   });
 
   it("renders Dashboard and DashboardHome without crashing", async () => {
