@@ -293,7 +293,9 @@ const Settings = () => {
           users[idx].password = passwords.newPassword;
           localStorage.setItem("ak_offline_users", JSON.stringify(users));
         }
-      } catch {}
+      } catch {
+        // Ignore localStorage error
+      }
       setPasswords({ newPassword: "", confirmPassword: "" });
       toast({
         title: "Password Updated Successfully! 🔐",
@@ -350,7 +352,9 @@ const Settings = () => {
           users[idx].password = passwords.newPassword;
           localStorage.setItem("ak_offline_users", JSON.stringify(users));
         }
-      } catch {}
+      } catch {
+        // Ignore localStorage error
+      }
       setOtpModalOpen(false);
       setPasswords({ newPassword: "", confirmPassword: "" });
       setOtpCode("");

@@ -311,7 +311,9 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
         }
         return { data: [], error: null, count: 0 };
       }
-    } catch {}
+    } catch {
+      // Ignore localStorage parse errors
+    }
 
     return { data: [], error: null, count: 0 };
   }
@@ -344,7 +346,9 @@ const auth = {
             }
             return { data: { session }, error: null };
           }
-        } catch {}
+        } catch {
+          // Ignore parse errors
+        }
       }
 
       const userStored = localStorage.getItem("ak_user_session");
@@ -354,7 +358,9 @@ const auth = {
           if (session?.user) {
             return { data: { session }, error: null };
           }
-        } catch {}
+        } catch {
+          // Ignore parse errors
+        }
       }
 
       if (isStaticHosting()) {
@@ -589,7 +595,9 @@ const auth = {
         try {
           const raw = sessionStorage.getItem("ak_pending_reg");
           if (raw) pending = JSON.parse(raw);
-        } catch {}
+        } catch {
+          // Ignore parse errors
+        }
         return this.executeLocalUserLogin(payload.email.trim().toLowerCase(), pending.password);
       }
       return { data: { user: null, session: null }, error: { message: "Invalid 6-digit OTP. Please enter 123456." } };
@@ -612,7 +620,9 @@ const auth = {
         try {
           const raw = sessionStorage.getItem("ak_pending_reg");
           if (raw) pending = JSON.parse(raw);
-        } catch {}
+        } catch {
+          // Ignore parse errors
+        }
         return this.executeLocalUserLogin(payload.email.trim().toLowerCase(), pending.password);
       }
       return { data: { user: null, session: null }, error: { message: "Invalid 6-digit OTP. Please enter 123456." } };
@@ -765,7 +775,9 @@ export const backend = {
             reader.onerror = reject;
             reader.readAsDataURL(file);
           });
-        } catch {}
+        } catch {
+          // Ignore FileReader error
+        }
 
         if (isStaticHosting()) {
           const finalUrl = dataUrl || URL.createObjectURL(file);
@@ -788,7 +800,9 @@ export const backend = {
             storageUrlCache.set(`${bucket}:${filePath}`, remoteUrl);
             return { data: { path: result.path, publicUrl: remoteUrl }, error: null };
           }
-        } catch {}
+        } catch {
+          // Fall back to local dataUrl / objectUrl
+        }
 
         const finalUrl = dataUrl || URL.createObjectURL(file);
         storageUrlCache.set(`${bucket}:${filePath}`, finalUrl);
