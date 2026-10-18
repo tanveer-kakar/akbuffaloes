@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>AK Buffalo - Premium Buffalo Breeds & Quality Milk</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta name="description" content="AK Buffalo - Trusted buffalo dairy farm with 25+ years of experience. Premium Murrah, Nili-Ravi & Jaffarabadi breeds." />
+    <meta name="author" content="AK Buffalo" />
+
+    <meta property="og:title" content="AK Buffalo - Premium Buffalo Breeds" />
+    <meta property="og:description" content="AK Buffalo - Trusted dairy farm with premium breeds and quality milk." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/ak-buffalo-logo.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="/ak-buffalo-logo.png" />
+  </head>
+
+  <body>
+    <div id="root">
+      <div style="position:fixed;inset:0;background:#0c1a0e;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;color:#ffffff;z-index:99999;">
+        <div style="position:relative;width:130px;height:130px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;">
+          <div style="position:absolute;inset:0;border-radius:50%;border:2px dashed rgba(212,175,55,0.4);animation:akSpin 12s linear infinite;"></div>
+          <div style="position:absolute;inset:8px;border-radius:50%;background:radial-gradient(circle,rgba(212,175,55,0.18) 0%,rgba(16,48,22,0.4) 100%);border:1px solid rgba(212,175,55,0.45);box-shadow:0 0 25px rgba(212,175,55,0.2);"></div>
+          <img
+            src="/ak-buffalo-logo-emblem.png"
+            alt="AK Buffaloes"
+            style="width:84px;height:84px;position:relative;z-index:10;border-radius:50%;object-fit:contain;filter:drop-shadow(0 6px 12px rgba(0,0,0,0.6));"
+          />
+        </div>
+        <div style="font-size:20px;font-weight:700;letter-spacing:2.5px;color:#D4AF37;text-transform:uppercase;margin-bottom:3px;">AK Buffaloes</div>
+        <div style="font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.7);text-transform:uppercase;margin-bottom:18px;">Premium Farm &amp; Breeds</div>
+        <div style="width:180px;height:4px;background:rgba(0,0,0,0.5);border-radius:4px;overflow:hidden;border:1px solid rgba(212,175,55,0.35);position:relative;">
+          <div style="width:40%;height:100%;background:linear-gradient(90deg,#2e7d32,#D4AF37,#FFF3C4);border-radius:4px;animation:akProgress 1.4s ease-in-out infinite;"></div>
+        </div>
+      </div>
+      <style>
+        @keyframes akSpin { 100% { transform: rotate(360deg); } }
+        @keyframes akProgress { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+      </style>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
