@@ -7,7 +7,7 @@ import {
   useMemo,
   type ReactNode,
 } from "react";
-import { backend } from "@/lib/backendClient";
+import { backend, isStaticHosting } from "@/lib/backendClient";
 import {
   DEFAULT_FESTIVAL_SETTINGS,
   evaluateFestivalCalendar,
@@ -97,39 +97,42 @@ export const FestivalThemeProvider = ({ children }: { children: ReactNode }) => 
   }, []);
 
   const refreshFestivalState = useCallback(async () => {
-    try {
-      const response = await fetch("/api/festivals/live", {
-        method: "GET",
-        credentials: "include",
-        headers: {
-          "Cache-Control": "no-cache",
-          Pragma: "no-cache",
-        },
-      });
+    if (!isStaticHosting()) {
+      try {
+        const response = await fetch("/api/festivals/live", {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
+        });
 
-      if (response.ok) {
-        const payload = await response.json();
-        if (payload.istNow?.isoNow) {
-          const srvTime = new Date(payload.istNow.isoNow).getTime();
-          if (!Number.isNaN(srvTime)) {
-            setServerOffsetMs(srvTime - Date.now());
+        const contentType = response.headers.get("content-type") || "";
+        if (response.ok && !contentType.includes("text/html")) {
+          const payload = await response.json();
+          if (payload.istNow?.isoNow) {
+            const srvTime = new Date(payload.istNow.isoNow).getTime();
+            if (!Number.isNaN(srvTime)) {
+              setServerOffsetMs(srvTime - Date.now());
+            }
           }
+          if (payload.settings) {
+            setSettings({
+              ...DEFAULT_FESTIVAL_SETTINGS,
+              ...payload.settings,
+            });
+          }
+          if (Array.isArray(payload.occasions)) {
+            setDbOccasions(payload.occasions);
+          }
+          setTickNow(new Date());
+          setLoading(false);
+          return;
         }
-        if (payload.settings) {
-          setSettings({
-            ...DEFAULT_FESTIVAL_SETTINGS,
-            ...payload.settings,
-          });
-        }
-        if (Array.isArray(payload.occasions)) {
-          setDbOccasions(payload.occasions);
-        }
-        setTickNow(new Date());
-        setLoading(false);
-        return;
+      } catch {
+        // Fallback to standard /api/data queries if /api/festivals/live is unavailable
       }
-    } catch {
-      // Fallback to standard /api/data queries if /api/festivals/live is unavailable
     }
 
     try {
@@ -306,20 +309,23 @@ export const FestivalThemeProvider = ({ children }: { children: ReactNode }) => 
       };
       setSettings(nextSettings);
 
-      try {
-        const res = await fetch("/api/festivals/settings", {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(nextSettings),
-        });
-        if (res.ok) {
-          notifyAllTabs();
-          await refreshFestivalState();
-          return { error: null };
+      if (!isStaticHosting()) {
+        try {
+          const res = await fetch("/api/festivals/settings", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(nextSettings),
+          });
+          const contentType = res.headers.get("content-type") || "";
+          if (res.ok && !contentType.includes("text/html")) {
+            notifyAllTabs();
+            await refreshFestivalState();
+            return { error: null };
+          }
+        } catch {
+          // Fallback to /api/data
         }
-      } catch {
-        // Fallback to /api/data
       }
 
       const { error } = await backend

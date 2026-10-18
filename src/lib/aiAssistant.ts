@@ -1,3 +1,5 @@
+import { isStaticHosting } from "@/lib/backendClient";
+
 export interface ChatMessage {
   id: string;
   sender: "user" | "assistant";
@@ -66,18 +68,21 @@ export async function askAiAssistant(
   const enrichedContext: UserAiContext = { ...userContext };
 
   try {
-    const res = await fetch("/api/ai/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: question, userContext }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data?.liveStats) {
-        enrichedContext.inquiriesCount = data.liveStats.totalUserInquiries ?? enrichedContext.inquiriesCount;
-        enrichedContext.pendingCount = data.liveStats.pendingInquiries ?? enrichedContext.pendingCount;
-        enrichedContext.confirmedCount = data.liveStats.confirmedInquiries ?? enrichedContext.confirmedCount;
-        enrichedContext.availableBuffaloesCount = data.liveStats.availableBuffaloes ?? enrichedContext.availableBuffaloesCount;
+    if (!isStaticHosting()) {
+      const res = await fetch("/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: question, userContext }),
+      });
+      const contentType = res.headers.get("content-type") || "";
+      if (res.ok && !contentType.includes("text/html")) {
+        const data = await res.json();
+        if (data?.liveStats) {
+          enrichedContext.inquiriesCount = data.liveStats.totalUserInquiries ?? enrichedContext.inquiriesCount;
+          enrichedContext.pendingCount = data.liveStats.pendingInquiries ?? enrichedContext.pendingCount;
+          enrichedContext.confirmedCount = data.liveStats.confirmedInquiries ?? enrichedContext.confirmedCount;
+          enrichedContext.availableBuffaloesCount = data.liveStats.availableBuffaloes ?? enrichedContext.availableBuffaloesCount;
+        }
       }
     }
   } catch {
