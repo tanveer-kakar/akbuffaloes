@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   Award,
   Calendar,
+  CameraOff,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
@@ -150,7 +151,11 @@ const BreedDetail = () => {
 
   const renderDetailCard = (stock: NewStockBuffaloRecord, isModal = false) => {
     const images = activeImages;
-    const currentImage = images[activeMediaIndex % Math.max(1, images.length)];
+    const hasImages = images.length > 0;
+    const currentImage = hasImages
+      ? images[activeMediaIndex % images.length]
+      : resolveBuffaloImage(stock, 0, stock.breed);
+    const hasThumbStrip = images.length > 1 || Boolean(stock.video_url);
     const isNewArrival = Boolean(stock.is_new_stock);
     const isOut = stock.status === "out_of_stock" || !stock.is_available;
     const isLim = stock.status === "limited_stock";
@@ -199,15 +204,27 @@ const BreedDetail = () => {
         {/* Media Gallery */}
         <div className="p-3.5 sm:p-4 bg-muted/40 border-b border-border">
           <div className="grid grid-cols-12 gap-2.5">
-            <div className="col-span-9 relative h-52 sm:h-60 rounded-xl overflow-hidden bg-neutral-950 border border-gold/30 group">
+            <div className={`${hasThumbStrip ? "col-span-9" : "col-span-12"} relative h-52 sm:h-60 rounded-xl overflow-hidden bg-neutral-950 border border-gold/30 group`}>
               {isPlayingVideo && stock.video_url ? (
-                <video
-                  src={stock.video_url}
-                  controls
-                  autoPlay
-                  className="w-full h-full object-contain bg-black"
-                />
-              ) : (
+                <div className="relative w-full h-full bg-black">
+                  <video
+                    src={stock.video_url}
+                    controls
+                    autoPlay
+                    className="w-full h-full object-contain bg-black"
+                  />
+                  {hasImages && (
+                    <button
+                      type="button"
+                      onClick={() => setIsPlayingVideo(false)}
+                      className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full bg-black/80 hover:bg-black text-gold text-[10px] font-sans font-bold border border-gold/40 shadow-md transition-all flex items-center gap-1 z-10"
+                      title="Back to photos"
+                    >
+                      <Eye className="w-3 h-3" /> Back to Photos
+                    </button>
+                  )}
+                </div>
+              ) : hasImages ? (
                 <>
                   <img
                     src={currentImage}
@@ -257,62 +274,80 @@ const BreedDetail = () => {
                     {images.length}
                   </div>
                 </>
+              ) : stock.video_url ? (
+                <div className="relative w-full h-full bg-black">
+                  <video
+                    src={stock.video_url}
+                    controls
+                    autoPlay
+                    className="w-full h-full object-contain bg-black"
+                  />
+                </div>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground p-4 text-center">
+                  <CameraOff className="w-8 h-8 text-gold/40 mb-1" />
+                  <span className="font-sans text-xs">No photos attached</span>
+                </div>
               )}
             </div>
 
-            <div className="col-span-3 flex flex-col gap-2 h-52 sm:h-60">
-              {images.slice(0, 2).map((thumbUrl, idx) => {
-                const isSelected =
-                  !isPlayingVideo && activeMediaIndex % images.length === idx;
-                return (
+            {hasThumbStrip && (
+              <div className="col-span-3 flex flex-col gap-2 h-52 sm:h-60">
+                {images.slice(0, 2).map((thumbUrl, idx) => {
+                  const isSelected =
+                    !isPlayingVideo && activeMediaIndex % images.length === idx;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setIsPlayingVideo(false);
+                        setActiveMediaIndex(idx);
+                      }}
+                      className={`relative flex-1 rounded-lg overflow-hidden border-2 transition-all bg-neutral-900 ${
+                        isSelected
+                          ? "border-gold ring-2 ring-gold/40 shadow-sm"
+                          : "border-border opacity-80 hover:opacity-100"
+                      }`}
+                      title={`View Photo ${idx + 1}`}
+                    >
+                      <img
+                        src={thumbUrl}
+                        alt={`Thumbnail ${idx + 1}`}
+                        className="w-full h-full object-cover object-top"
+                      />
+                    </button>
+                  );
+                })}
+
+                {Boolean(stock.video_url) && (
                   <button
-                    key={idx}
                     type="button"
-                    onClick={() => {
-                      setIsPlayingVideo(false);
-                      setActiveMediaIndex(idx);
-                    }}
-                    className={`relative flex-1 rounded-lg overflow-hidden border-2 transition-all bg-neutral-900 ${
-                      isSelected
+                    onClick={() => setIsPlayingVideo(true)}
+                    className={`relative flex-1 rounded-lg overflow-hidden border-2 transition-all bg-neutral-950 group ${
+                      isPlayingVideo
                         ? "border-gold ring-2 ring-gold/40 shadow-sm"
-                        : "border-border opacity-80 hover:opacity-100"
+                        : "border-border hover:border-gold/70"
                     }`}
+                    title="Watch Live Buffalo Video"
                   >
                     <img
-                      src={thumbUrl}
-                      alt={`Thumbnail ${idx + 1}`}
-                      className="w-full h-full object-cover object-top"
+                      src={images[1] || images[0] || resolveBuffaloImage(stock, 0, stock.breed)}
+                      alt="Video preview"
+                      className="w-full h-full object-cover object-top brightness-50 group-hover:scale-105 transition-transform"
                     />
-                  </button>
-                );
-              })}
-
-              {Boolean(stock.video_url) && (
-                <button
-                  type="button"
-                  onClick={() => setIsPlayingVideo(true)}
-                  className={`relative flex-1 rounded-lg overflow-hidden border-2 transition-all bg-neutral-950 group ${
-                    isPlayingVideo
-                      ? "border-gold ring-2 ring-gold/40 shadow-sm"
-                      : "border-border hover:border-gold/70"
-                  }`}
-                >
-                  <img
-                    src={images[2] || images[0]}
-                    alt="Video preview"
-                    className="w-full h-full object-cover object-top brightness-50"
-                  />
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/45">
-                    <div className="w-7 h-7 rounded-full bg-gold text-green-dark flex items-center justify-center shadow-md">
-                      <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/45">
+                      <div className="w-7 h-7 rounded-full bg-gold text-green-dark flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                        <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                      </div>
+                      <span className="font-sans text-[10px] font-bold text-gold mt-0.5 tracking-wide">
+                        Video
+                      </span>
                     </div>
-                    <span className="font-sans text-[10px] font-bold text-gold mt-0.5">
-                      Video
-                    </span>
-                  </div>
-                </button>
-              )}
-            </div>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

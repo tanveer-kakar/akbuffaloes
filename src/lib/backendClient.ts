@@ -167,6 +167,25 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
       const raw = localStorage.getItem(storageKey);
       let records: DataRecord[] = raw ? JSON.parse(raw) : [];
 
+      // Auto-sanitize legacy broken paths if present in localStorage
+      if (this.table === "buffalo_listings" && Array.isArray(records) && records.length > 0) {
+        let changed = false;
+        records = records.map((rec) => {
+          const item = { ...rec };
+          if (item.image_url === "/Jaffarabadi3.jpg") {
+            item.image_url = "/Jaffarabadi1.jpg";
+            changed = true;
+          } else if (item.image_url === "/Jaffarabadi4.jpg") {
+            item.image_url = "/Jaffarabadi2.jpg";
+            changed = true;
+          }
+          return item;
+        });
+        if (changed) {
+          localStorage.setItem(storageKey, JSON.stringify(records));
+        }
+      }
+
       // Auto-seed table on static deployment
       if (!raw || records.length === 0) {
         if (this.table === "buffalo_listings") {
@@ -708,6 +727,8 @@ const auth = {
   },
 };
 
+const storageUrlCache = new Map<string, string>();
+
 export const backend = {
   auth,
   from: (table: string) => new DataQuery(table),
@@ -748,6 +769,7 @@ export const backend = {
 
         if (isStaticHosting()) {
           const finalUrl = dataUrl || URL.createObjectURL(file);
+          storageUrlCache.set(`${bucket}:${filePath}`, finalUrl);
           return { data: { path: filePath, publicUrl: finalUrl }, error: null };
         }
 
@@ -762,16 +784,26 @@ export const backend = {
             method: "PUT", body: JSON.stringify({ data: btoa(binary) }),
           });
           if (!result.error && result.path) {
-            return { data: { path: result.path, publicUrl: `/api/storage/${encodeURIComponent(bucket)}/${result.path}` }, error: null };
+            const remoteUrl = `/api/storage/${encodeURIComponent(bucket)}/${result.path}`;
+            storageUrlCache.set(`${bucket}:${filePath}`, remoteUrl);
+            return { data: { path: result.path, publicUrl: remoteUrl }, error: null };
           }
         } catch {}
 
         const finalUrl = dataUrl || URL.createObjectURL(file);
+        storageUrlCache.set(`${bucket}:${filePath}`, finalUrl);
         return { data: { path: filePath, publicUrl: finalUrl }, error: null };
       },
       getPublicUrl: (filePath: string) => {
         if (!filePath) return { data: { publicUrl: "" } };
         if (filePath.startsWith("data:") || filePath.startsWith("blob:") || filePath.startsWith("http://") || filePath.startsWith("https://") || filePath.startsWith("/")) {
+          return { data: { publicUrl: filePath } };
+        }
+        const cached = storageUrlCache.get(`${bucket}:${filePath}`);
+        if (cached) {
+          return { data: { publicUrl: cached } };
+        }
+        if (isStaticHosting()) {
           return { data: { publicUrl: filePath } };
         }
         return { data: { publicUrl: `/api/storage/${encodeURIComponent(bucket)}/${filePath.split("/").map(encodeURIComponent).join("/")}` } };

@@ -310,6 +310,29 @@ export const ALL_BREED_IMAGES_MAP: Record<string, string> = (() => {
       map[`sample-${breed.slug}-${idx + 1}`] = asset;
     });
   }
+
+  // Common aliases and virtual paths to guarantee 100% valid Vite assets
+  map["/jaffarabadi3.jpg"] = jaffarabadi1;
+  map["/jaffarabadi4.jpg"] = jaffarabadi2;
+  map["/jaffarabadi5.jpg"] = jaffarabadi1;
+  map["/jaffarabadi.jpg"] = jaffarabadi1;
+  map["/murrah3.jpg"] = murrah1;
+  map["/murrah4.jpg"] = murrah2;
+  map["/murrah.jpg"] = murrah1;
+  map["/nili-ravi.jpg"] = niliRavi1;
+  map["/nili-ravi3.jpg"] = niliRavi1;
+  map["/nili-ravi4.jpg"] = niliRavi2;
+  map["/mehsana1.jpg"] = mahesana1;
+  map["/mehsana2.jpg"] = mahesana2;
+  map["/mehsana.jpg"] = mahesana1;
+  map["/mahesana.jpg"] = mahesana1;
+  map["/surti.jpg"] = surti1;
+  map["/banni.jpg"] = breedBanni1;
+  map["/pandharpuri.jpg"] = pandharpuri1;
+  map["/nagpuri.jpg"] = nagpuri1;
+  map["/bhadawari.jpg"] = bhadawari1;
+  map["/godavari.jpg"] = godavari1;
+
   return map;
 })();
 
@@ -347,20 +370,58 @@ export function getDefaultBreedImagePath(breedName?: string | null): string {
 }
 
 export function resolveBuffaloImage(
-  buffalo: { id?: string; name?: string; breed?: string; image_url?: string | null },
+  buffalo: {
+    id?: string;
+    name?: string;
+    breed?: string;
+    image_url?: string | null;
+    extra_images?: string[] | null;
+  },
   index = 0,
   fallbackBreedSlugOrName?: string
 ): string {
+  const meta = getBreedMetaByNameOrSlug(buffalo.breed || fallbackBreedSlugOrName);
+
   if (buffalo.image_url) {
     const trimmed = buffalo.image_url.trim();
-    if (ALL_BREED_IMAGES_MAP[trimmed]) {
-      return ALL_BREED_IMAGES_MAP[trimmed];
+    if (trimmed && trimmed !== "none" && trimmed !== "__none__") {
+      if (ALL_BREED_IMAGES_MAP[trimmed]) {
+        return ALL_BREED_IMAGES_MAP[trimmed];
+      }
+      if (ALL_BREED_IMAGES_MAP[trimmed.toLowerCase()]) {
+        return ALL_BREED_IMAGES_MAP[trimmed.toLowerCase()];
+      }
+      if (
+        trimmed.startsWith("data:") ||
+        trimmed.startsWith("blob:") ||
+        trimmed.startsWith("http://") ||
+        trimmed.startsWith("https://") ||
+        trimmed.includes("/assets/")
+      ) {
+        return trimmed;
+      }
     }
-    if (ALL_BREED_IMAGES_MAP[trimmed.toLowerCase()]) {
-      return ALL_BREED_IMAGES_MAP[trimmed.toLowerCase()];
-    }
-    if (trimmed.length > 0) {
-      return trimmed;
+  }
+
+  // If main photo was removed or not set, but Photo 2 exists, show Photo 2 on the card
+  if (Array.isArray(buffalo.extra_images) && buffalo.extra_images.length > 0 && buffalo.extra_images[0]) {
+    const extraTrimmed = buffalo.extra_images[0].trim();
+    if (extraTrimmed && extraTrimmed !== "none" && extraTrimmed !== "__none__") {
+      if (ALL_BREED_IMAGES_MAP[extraTrimmed]) {
+        return ALL_BREED_IMAGES_MAP[extraTrimmed];
+      }
+      if (ALL_BREED_IMAGES_MAP[extraTrimmed.toLowerCase()]) {
+        return ALL_BREED_IMAGES_MAP[extraTrimmed.toLowerCase()];
+      }
+      if (
+        extraTrimmed.startsWith("data:") ||
+        extraTrimmed.startsWith("blob:") ||
+        extraTrimmed.startsWith("http://") ||
+        extraTrimmed.startsWith("https://") ||
+        extraTrimmed.includes("/assets/")
+      ) {
+        return extraTrimmed;
+      }
     }
   }
 
@@ -368,7 +429,6 @@ export function resolveBuffaloImage(
     return ALL_BREED_IMAGES_MAP[buffalo.id];
   }
 
-  const meta = getBreedMetaByNameOrSlug(buffalo.breed || fallbackBreedSlugOrName);
   const match = (buffalo.name || "").match(/\d+/);
   if (match) {
     const idx = parseInt(match[0], 10) - 1;
@@ -388,8 +448,10 @@ export function resolveAdminBuffaloThumb(
 }
 
 /**
- * Returns 2 genuine buffalo images for any buffalo sample listing (1 main image + 1 additional genuine buffalo image)
- * so every sample across all 10 breeds has a clean 2-photo interactive slider.
+ * Returns genuine buffalo images for any buffalo listing (strictly 1 or 2 photos max).
+ * - If only 1 image was selected or Photo 2 was removed, returns exactly that 1 photo.
+ * - If Photo 2 is present, returns exactly 2 photos.
+ * - Never injects unwanted filler photos from other breeds.
  */
 export function getBuffaloSliderImages(
   buffaloOrBreed:
@@ -404,65 +466,98 @@ export function getBuffaloSliderImages(
   indexOrId: number | string = 0,
   fallbackBreedOrImageUrl?: string | null
 ): string[] {
-  const buffalo =
-    typeof buffaloOrBreed === "string"
-      ? {
-          id: typeof indexOrId === "string" ? indexOrId : undefined,
-          breed: buffaloOrBreed,
-          image_url: fallbackBreedOrImageUrl,
-        }
-      : buffaloOrBreed;
-  const index = typeof indexOrId === "number" ? indexOrId : 0;
-  const fallbackBreedSlugOrName =
-    typeof buffaloOrBreed === "string" ? buffaloOrBreed : fallbackBreedOrImageUrl || undefined;
-  const primaryImage = resolveBuffaloImage(buffalo, index, fallbackBreedSlugOrName);
-  const meta = getBreedMetaByNameOrSlug(buffalo.breed || fallbackBreedSlugOrName);
-  const breedIdx = Math.max(
-    0,
-    BUFFALO_BREEDS.findIndex((b) => b.slug === meta.slug)
-  );
-
-  const match = (buffalo.name || "").match(/\d+/);
-  const sampleIdx = match ? Math.max(0, parseInt(match[0], 10) - 1) : index;
-
-  const result: string[] = [];
-  if (primaryImage) {
-    result.push(primaryImage);
-  }
-  const addUnique = (img?: string | null) => {
-    if (!img) return;
-    const resolved = ALL_BREED_IMAGES_MAP[img] || ALL_BREED_IMAGES_MAP[img.toLowerCase()] || img;
-    if (resolved && !result.includes(resolved)) {
-      result.push(resolved);
-    }
-  };
-
-  // 1. Include any custom extra_images if present on the listing (up to 2 total)
-  if (Array.isArray(buffalo.extra_images)) {
-    for (const extra of buffalo.extra_images) {
-      addUnique(extra);
-      if (result.length >= 2) return result.slice(0, 2);
-    }
-    // Explicit array was passed (e.g. [] or [photo2]); do not auto-fill with extra pool photos
+  if (typeof buffaloOrBreed === "string") {
+    const meta = getBreedMetaByNameOrSlug(buffaloOrBreed);
+    const result: string[] = [];
+    if (meta.photoAssets[0]) result.push(meta.photoAssets[0]);
+    if (meta.photoAssets[1]) result.push(meta.photoAssets[1]);
     return result.slice(0, 2);
   }
 
-  // 2. Add genuine breed-specific photo rotated by sampleIdx (up to 2 total)
-  for (let offset = 1; offset < meta.photoAssets.length && result.length < 2; offset++) {
-    const asset = meta.photoAssets[(sampleIdx + offset) % meta.photoAssets.length];
-    addUnique(asset);
+  const buffalo = buffaloOrBreed;
+  const index = typeof indexOrId === "number" ? indexOrId : 0;
+  const fallbackBreedSlugOrName =
+    typeof buffaloOrBreed === "string" ? buffaloOrBreed : fallbackBreedOrImageUrl || undefined;
+  const meta = getBreedMetaByNameOrSlug(buffalo.breed || fallbackBreedSlugOrName);
+
+  const resolveSingleImg = (rawUrl?: string | null): string | null => {
+    if (!rawUrl || typeof rawUrl !== "string") return null;
+    const trimmed = rawUrl.trim();
+    if (!trimmed || trimmed === "none" || trimmed === "__none__") return null;
+    if (ALL_BREED_IMAGES_MAP[trimmed]) return ALL_BREED_IMAGES_MAP[trimmed];
+    if (ALL_BREED_IMAGES_MAP[trimmed.toLowerCase()]) return ALL_BREED_IMAGES_MAP[trimmed.toLowerCase()];
+    if (
+      trimmed.startsWith("data:") ||
+      trimmed.startsWith("blob:") ||
+      trimmed.startsWith("http://") ||
+      trimmed.startsWith("https://") ||
+      trimmed.includes("/assets/")
+    ) {
+      return trimmed;
+    }
+    return meta.photoAssets[0] || meta.image;
+  };
+
+  const isPhoto1ExplicitlyRemoved =
+    buffalo.image_url === "" ||
+    buffalo.image_url === null ||
+    buffalo.image_url === "none" ||
+    buffalo.image_url === "__none__";
+
+  const isPhoto2ExplicitlyRemoved =
+    Array.isArray(buffalo.extra_images) && buffalo.extra_images.length === 0;
+
+  const result: string[] = [];
+
+  // 1. Resolve Photo 1 if not explicitly removed
+  if (!isPhoto1ExplicitlyRemoved) {
+    if (buffalo.image_url) {
+      const resolved = resolveSingleImg(buffalo.image_url);
+      if (resolved && !result.includes(resolved)) {
+        result.push(resolved);
+      }
+    } else if (buffalo.image_url === undefined) {
+      const fallback = meta.photoAssets[index % meta.photoAssets.length] || meta.image;
+      if (fallback && !result.includes(fallback)) {
+        result.push(fallback);
+      }
+    }
   }
 
-  // 3. Add genuine farm/angle buffalo photos from EXTRA_GENUINE_BUFFALO_POOL offset by breed & sample
-  const poolLen = EXTRA_GENUINE_BUFFALO_POOL.length;
-  for (let step = 0; step < poolLen && result.length < 2; step++) {
-    const poolIdx = (breedIdx * 3 + sampleIdx * 2 + step) % poolLen;
-    addUnique(EXTRA_GENUINE_BUFFALO_POOL[poolIdx]);
+  // 2. Resolve Photo 2 from extra_images if present
+  if (Array.isArray(buffalo.extra_images) && buffalo.extra_images.length > 0) {
+    for (const extra of buffalo.extra_images) {
+      const resolved = resolveSingleImg(extra);
+      if (resolved && !result.includes(resolved)) {
+        result.push(resolved);
+      }
+      if (result.length >= 2) break;
+    }
+    // Explicit array was passed; strictly respect it and do NOT auto-fill extra pool photos
+    return result.slice(0, 2);
   }
 
-  // 4. Fill any remaining slot up to 2 from breed photoAssets
-  for (let offset = 0; offset < meta.photoAssets.length && result.length < 2; offset++) {
-    addUnique(meta.photoAssets[(sampleIdx + offset) % meta.photoAssets.length]);
+  // 3. If Photo 2 was explicitly removed (extra_images === []), do NOT add any extra photos
+  if (isPhoto2ExplicitlyRemoved) {
+    return result.slice(0, 2);
+  }
+
+  // 4. Default seed fallback if extra_images is undefined: provide breed second photo
+  if (buffalo.extra_images === undefined && result.length < 2) {
+    for (const asset of meta.photoAssets) {
+      if (asset && !result.includes(asset)) {
+        result.push(asset);
+        if (result.length >= 2) break;
+      }
+    }
+    if (result.length < 2) {
+      for (const poolAsset of EXTRA_GENUINE_BUFFALO_POOL) {
+        if (poolAsset && !result.includes(poolAsset)) {
+          result.push(poolAsset);
+          if (result.length >= 2) break;
+        }
+      }
+    }
   }
 
   return result.slice(0, 2);
@@ -580,9 +675,9 @@ export const DEFAULT_NEW_STOCK_PROFILES: NewStockBuffaloRecord[] = [
     health_records: "Vaccinated & Dewormed",
     description:
       "Purebred heavy Saurashtra-lineage Jaffarabadi buffalo in 5 months confirmed pregnancy, broad bone frame, thick skin coat, and verified vet clearance.",
-    image_url: "/Jaffarabadi3.jpg",
-    extra_images: ["/Jaffarabadi1.jpg"],
-    video_url: galleryVideo2,
+    image_url: "/Jaffarabadi1.jpg",
+    extra_images: ["/Jaffarabadi2.jpg"],
+    video_url: galleryVideo3,
     is_available: true,
     status: "available",
     is_new_stock: true,
@@ -606,9 +701,9 @@ export const DEFAULT_NEW_STOCK_PROFILES: NewStockBuffaloRecord[] = [
     health_records: "Vaccinated & Vet Certified",
     description:
       "Grand champion 3rd lactation Jaffarabadi buffalo yielding 16 L/day high butterfat milk, magnificent downward curved horns, massive dairy frame, and healthy calf.",
-    image_url: "/Jaffarabadi4.jpg",
+    image_url: "/Jaffarabadi2.jpg",
     extra_images: ["/Jaffarabadi1.jpg"],
-    video_url: galleryVideo3,
+    video_url: galleryVideo4,
     is_available: true,
     status: "available",
     is_new_stock: true,

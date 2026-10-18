@@ -1649,6 +1649,7 @@ const AdminPanel = () => {
 
   // Strictly 1 Preset Photo for buffaloes: shows only the 1 selected photo, removing all other photos
   const dynamicPhoto1Presets = useMemo(() => {
+    if (buffaloForm.image_url === "") return [];
     const currentVal = buffaloForm.image_url?.trim() || getDefaultBreedImagePath(buffaloForm.breed);
     if (!currentVal) return [];
     const preview = resolveBuffaloImage({ breed: buffaloForm.breed, image_url: currentVal }, 0, buffaloForm.breed);
@@ -1786,6 +1787,14 @@ const AdminPanel = () => {
   };
 
   // Upload buffalo photo 1 (Main Photo) inside Add/Edit modal
+  const sanitizeMediaUrl = (url?: string | null): string => {
+    if (!url) return "";
+    const trimmed = url.trim();
+    if (trimmed.startsWith("data:") || trimmed.startsWith("blob:")) return trimmed;
+    return trimmed.includes("?") ? `${trimmed}&t=${Date.now()}` : `${trimmed}?t=${Date.now()}`;
+  };
+
+  // Upload buffalo photo 1 (Main Profile Photo) inside Add/Edit modal
   const handleBuffaloImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1802,13 +1811,13 @@ const AdminPanel = () => {
       const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
       const targetId = editingBuffalo?.id || `buffalo-${Date.now()}`;
       const filePath = `${targetId}/photo-1-${Date.now()}.${ext}`;
-      const { error: uploadError } = await backend.storage.from("buffaloes").upload(filePath, file, { upsert: true });
+      const { data: uploadData, error: uploadError } = await backend.storage.from("buffaloes").upload(filePath, file, { upsert: true });
       if (uploadError) {
         toast({ title: "Photo upload failed", description: uploadError.message, variant: "destructive" });
         return;
       }
       const { data: urlData } = backend.storage.from("buffaloes").getPublicUrl(filePath);
-      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      const publicUrl = sanitizeMediaUrl(uploadData?.publicUrl || urlData?.publicUrl);
       setBuffaloForm((prev) => ({ ...prev, image_url: publicUrl }));
       toast({ title: "Main Buffalo Photo Uploaded! 📸", description: "Click Save to apply this photo to the listing." });
       if (sound.isEnabled()) sound.playSuccess();
@@ -1835,13 +1844,13 @@ const AdminPanel = () => {
       const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
       const targetId = editingBuffalo?.id || `buffalo-${Date.now()}`;
       const filePath = `${targetId}/photo-2-${Date.now()}.${ext}`;
-      const { error: uploadError } = await backend.storage.from("buffaloes").upload(filePath, file, { upsert: true });
+      const { data: uploadData, error: uploadError } = await backend.storage.from("buffaloes").upload(filePath, file, { upsert: true });
       if (uploadError) {
         toast({ title: "Second photo upload failed", description: uploadError.message, variant: "destructive" });
         return;
       }
       const { data: urlData } = backend.storage.from("buffaloes").getPublicUrl(filePath);
-      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      const publicUrl = sanitizeMediaUrl(uploadData?.publicUrl || urlData?.publicUrl);
       setBuffaloForm((prev) => ({ ...prev, extra_image_url: publicUrl }));
       toast({ title: "Second Buffalo Photo Uploaded! 📸", description: "Click Save to apply this photo to the listing." });
       if (sound.isEnabled()) sound.playSuccess();
@@ -1868,13 +1877,13 @@ const AdminPanel = () => {
     try {
       const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
       const filePath = `${target.id}/photo-${Date.now()}.${ext}`;
-      const { error: uploadError } = await backend.storage.from("buffaloes").upload(filePath, file, { upsert: true });
+      const { data: uploadData, error: uploadError } = await backend.storage.from("buffaloes").upload(filePath, file, { upsert: true });
       if (uploadError) {
         toast({ title: "Upload failed", description: uploadError.message, variant: "destructive" });
         return;
       }
       const { data: urlData } = backend.storage.from("buffaloes").getPublicUrl(filePath);
-      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      const publicUrl = sanitizeMediaUrl(uploadData?.publicUrl || urlData?.publicUrl);
       const fullUpdatedRecord: BuffaloListingAdmin = {
         ...target,
         image_url: publicUrl,
@@ -1927,13 +1936,13 @@ const AdminPanel = () => {
       const ext = (file.name.split(".").pop() || "mp4").toLowerCase();
       const targetId = editingBuffalo?.id || `buffalo-${Date.now()}`;
       const filePath = `${targetId}/video-${Date.now()}.${ext}`;
-      const { error: uploadError } = await backend.storage.from("buffaloes").upload(filePath, file, { upsert: true });
+      const { data: uploadData, error: uploadError } = await backend.storage.from("buffaloes").upload(filePath, file, { upsert: true });
       if (uploadError) {
         toast({ title: "Video upload failed", description: uploadError.message, variant: "destructive" });
         return;
       }
       const { data: urlData } = backend.storage.from("buffaloes").getPublicUrl(filePath);
-      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      const publicUrl = sanitizeMediaUrl(uploadData?.publicUrl || urlData?.publicUrl);
       setBuffaloForm((prev) => ({ ...prev, video_url: publicUrl }));
       toast({ title: "Buffalo Video Uploaded! 🎬", description: "Click Save to apply this video to the listing." });
       if (sound.isEnabled()) sound.playSuccess();
@@ -2056,13 +2065,13 @@ const AdminPanel = () => {
     try {
       const ext = (file.name.split(".").pop() || "mp4").toLowerCase();
       const filePath = `${target.id}/video-${Date.now()}.${ext}`;
-      const { error: uploadError } = await backend.storage.from("buffaloes").upload(filePath, file, { upsert: true });
+      const { data: uploadData, error: uploadError } = await backend.storage.from("buffaloes").upload(filePath, file, { upsert: true });
       if (uploadError) {
         toast({ title: "Upload failed", description: uploadError.message, variant: "destructive" });
         return;
       }
       const { data: urlData } = backend.storage.from("buffaloes").getPublicUrl(filePath);
-      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      const publicUrl = sanitizeMediaUrl(uploadData?.publicUrl || urlData?.publicUrl);
       const fullUpdatedRecord: BuffaloListingAdmin = {
         ...target,
         video_url: publicUrl,
@@ -2115,13 +2124,13 @@ const AdminPanel = () => {
     try {
       const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
       const filePath = `${target.id}/photo1-${Date.now()}.${ext}`;
-      const { error: uploadError } = await backend.storage.from("buffaloes").upload(filePath, file, { upsert: true });
+      const { data: uploadData, error: uploadError } = await backend.storage.from("buffaloes").upload(filePath, file, { upsert: true });
       if (uploadError) {
         toast({ title: "Upload failed", description: uploadError.message, variant: "destructive" });
         return;
       }
       const { data: urlData } = backend.storage.from("buffaloes").getPublicUrl(filePath);
-      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      const publicUrl = sanitizeMediaUrl(uploadData?.publicUrl || urlData?.publicUrl);
       const fullUpdatedRecord: BuffaloListingAdmin = {
         ...target,
         image_url: publicUrl,
@@ -2167,13 +2176,13 @@ const AdminPanel = () => {
     try {
       const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
       const filePath = `${target.id}/photo2-${Date.now()}.${ext}`;
-      const { error: uploadError } = await backend.storage.from("buffaloes").upload(filePath, file, { upsert: true });
+      const { data: uploadData, error: uploadError } = await backend.storage.from("buffaloes").upload(filePath, file, { upsert: true });
       if (uploadError) {
         toast({ title: "Upload failed", description: uploadError.message, variant: "destructive" });
         return;
       }
       const { data: urlData } = backend.storage.from("buffaloes").getPublicUrl(filePath);
-      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      const publicUrl = sanitizeMediaUrl(uploadData?.publicUrl || urlData?.publicUrl);
       const fullUpdatedRecord: BuffaloListingAdmin = {
         ...target,
         extra_images: [publicUrl],
@@ -2219,13 +2228,13 @@ const AdminPanel = () => {
     try {
       const ext = (file.name.split(".").pop() || "mp4").toLowerCase();
       const filePath = `${target.id}/video-${Date.now()}.${ext}`;
-      const { error: uploadError } = await backend.storage.from("buffaloes").upload(filePath, file, { upsert: true });
+      const { data: uploadData, error: uploadError } = await backend.storage.from("buffaloes").upload(filePath, file, { upsert: true });
       if (uploadError) {
         toast({ title: "Upload failed", description: uploadError.message, variant: "destructive" });
         return;
       }
       const { data: urlData } = backend.storage.from("buffaloes").getPublicUrl(filePath);
-      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      const publicUrl = sanitizeMediaUrl(uploadData?.publicUrl || urlData?.publicUrl);
       const fullUpdatedRecord: BuffaloListingAdmin = {
         ...target,
         video_url: publicUrl,
@@ -2542,7 +2551,7 @@ const AdminPanel = () => {
         const targetId = `custom-${mediaType === "video" ? "vid" : "img"}-${uniqueStamp}`;
         const filePath = `${targetId}/${mediaType}-${uniqueStamp}.${ext}`;
 
-        const { error: uploadError } = await backend.storage
+        const { data: uploadData, error: uploadError } = await backend.storage
           .from("gallery")
           .upload(filePath, file, { upsert: true });
         if (uploadError) {
@@ -2555,7 +2564,7 @@ const AdminPanel = () => {
         }
 
         const { data: urlData } = backend.storage.from("gallery").getPublicUrl(filePath);
-        const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+        const publicUrl = sanitizeMediaUrl(uploadData?.publicUrl || urlData?.publicUrl);
 
         if (isVideo) {
           currentVideoIdx += 1;
@@ -2655,13 +2664,13 @@ const AdminPanel = () => {
       const mediaType: "image" | "video" = isVideo ? "video" : "image";
       const targetId = editingGalleryItem?.id || `gallery-${Date.now()}`;
       const filePath = `${targetId}/${mediaType}-${Date.now()}.${ext}`;
-      const { error: uploadError } = await backend.storage.from("gallery").upload(filePath, file, { upsert: true });
+      const { data: uploadData, error: uploadError } = await backend.storage.from("gallery").upload(filePath, file, { upsert: true });
       if (uploadError) {
         toast({ title: "Media upload failed", description: uploadError.message, variant: "destructive" });
         return;
       }
       const { data: urlData } = backend.storage.from("gallery").getPublicUrl(filePath);
-      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      const publicUrl = sanitizeMediaUrl(uploadData?.publicUrl || urlData?.publicUrl);
       const cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
       setGalleryForm((prev) => ({
         ...prev,
@@ -2700,13 +2709,13 @@ const AdminPanel = () => {
       const ext = (file.name.split(".").pop() || (isVideo ? "mp4" : "jpg")).toLowerCase();
       const newType: "image" | "video" = isVideo ? "video" : "image";
       const filePath = `${target.id}/${newType}-${Date.now()}.${ext}`;
-      const { error: uploadError } = await backend.storage.from("gallery").upload(filePath, file, { upsert: true });
+      const { data: uploadData, error: uploadError } = await backend.storage.from("gallery").upload(filePath, file, { upsert: true });
       if (uploadError) {
         toast({ title: "Upload failed", description: uploadError.message, variant: "destructive" });
         return;
       }
       const { data: urlData } = backend.storage.from("gallery").getPublicUrl(filePath);
-      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      const publicUrl = sanitizeMediaUrl(uploadData?.publicUrl || urlData?.publicUrl);
 
       const existingDb = galleryDbRecords.find((r) => r.id === target.id);
       const recordPayload: GalleryItemDbRecord = {
@@ -3449,10 +3458,10 @@ const AdminPanel = () => {
     setUploadingAdminAvatar(true);
     const ext = file.name.split(".").pop();
     const filePath = `${editingProfile.user_id}/avatar.${ext}`;
-    const { error: uploadError } = await backend.storage.from("avatars").upload(filePath, file, { upsert: true });
+    const { data: uploadData, error: uploadError } = await backend.storage.from("avatars").upload(filePath, file, { upsert: true });
     if (uploadError) { setUploadingAdminAvatar(false); toast({ title: "Upload failed", description: uploadError.message, variant: "destructive" }); return; }
     const { data: urlData } = backend.storage.from("avatars").getPublicUrl(filePath);
-    const publicUrl = urlData.publicUrl + "?t=" + Date.now();
+    const publicUrl = sanitizeMediaUrl(uploadData?.publicUrl || urlData?.publicUrl);
     await backend.from("profiles").update({ avatar_url: publicUrl }).eq("id", editingProfile.id);
     setProfiles(prev => prev.map(p => p.id === editingProfile.id ? { ...p, avatar_url: publicUrl } : p));
     setEditingProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : prev);
@@ -7203,7 +7212,7 @@ const AdminPanel = () => {
                     <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-neutral-950 border-2 border-gold/40 shrink-0 flex items-center justify-center">
                       {buffaloForm.image_url ? (
                         <img
-                          src={buffaloForm.image_url}
+                          src={resolveBuffaloImage({ breed: buffaloForm.breed, image_url: buffaloForm.image_url }, 0, buffaloForm.breed)}
                           alt={buffaloForm.name || "Buffalo Photo 1 preview"}
                           className="w-full h-full object-cover object-top"
                         />
@@ -7337,7 +7346,7 @@ const AdminPanel = () => {
                     <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-neutral-950 border-2 border-gold/40 shrink-0 flex items-center justify-center">
                       {buffaloForm.extra_image_url ? (
                         <img
-                          src={buffaloForm.extra_image_url}
+                          src={resolveBuffaloImage({ breed: buffaloForm.breed, image_url: buffaloForm.extra_image_url }, 1, buffaloForm.breed)}
                           alt={buffaloForm.name || "Buffalo Photo 2 preview"}
                           className="w-full h-full object-cover object-top"
                         />
@@ -7865,20 +7874,16 @@ const AdminPanel = () => {
             const hasVideo = Boolean(previewBuffaloDetail.video_url && previewBuffaloDetail.video_url.trim() !== "");
             const videoSrc = previewBuffaloDetail.video_url?.trim() || "";
 
-            const sliderImages: string[] = [];
-            if (hasPhoto1 && previewBuffaloDetail.image_url) {
-              sliderImages.push(previewBuffaloDetail.image_url);
-            }
-            if (hasPhoto2 && previewBuffaloDetail.extra_images?.[0]) {
-              sliderImages.push(previewBuffaloDetail.extra_images[0]);
-            }
-            if (sliderImages.length === 0) {
-              const defaultFallback = getBuffaloSliderImages(previewBuffaloDetail, 0, previewBuffaloDetail.breed);
-              sliderImages.push(...defaultFallback.slice(0, 2));
-            }
-            const totalSlides = sliderImages.length;
+            const sliderImages = getBuffaloSliderImages(
+              previewBuffaloDetail,
+              0,
+              previewBuffaloDetail.breed
+            );
+            const totalSlides = Math.max(1, sliderImages.length);
             const currentImg =
-              sliderImages[previewBuffaloMediaIdx % totalSlides] || sliderImages[0];
+              sliderImages[previewBuffaloMediaIdx % totalSlides] ||
+              sliderImages[0] ||
+              resolveBuffaloImage(previewBuffaloDetail, 0, previewBuffaloDetail.breed);
             const isOut =
               previewBuffaloDetail.status === "out_of_stock" ||
               previewBuffaloDetail.is_available === false;
