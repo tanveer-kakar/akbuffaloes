@@ -197,6 +197,24 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
             item.image_url = "/Jaffarabadi2.jpg";
             changed = true;
           }
+
+          const matchingCanonical = DEFAULT_NEW_STOCK_PROFILES.find(
+            (p) => p.stock_code === item.stock_code || p.id === item.id
+          );
+          if (matchingCanonical) {
+            if (item.breed !== matchingCanonical.breed) {
+              item.breed = matchingCanonical.breed;
+              item.name = matchingCanonical.name;
+              item.subtitle_label = matchingCanonical.subtitle_label;
+              item.description = matchingCanonical.description;
+              changed = true;
+            }
+            if (!item.image_url || typeof item.image_url !== "string" || item.image_url.includes("undefined")) {
+              item.image_url = matchingCanonical.image_url;
+              item.extra_images = matchingCanonical.extra_images;
+              changed = true;
+            }
+          }
           return item;
         });
         if (changed) {

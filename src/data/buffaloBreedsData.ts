@@ -305,33 +305,172 @@ export const ALL_BREED_IMAGES_MAP: Record<string, string> = (() => {
       const asset = breed.photoAssets[idx];
       map[p] = asset;
       map[p.toLowerCase()] = asset;
+      const stripped = p.replace(/^\/+/, "");
+      map[stripped] = asset;
+      map[stripped.toLowerCase()] = asset;
       map[`/${breed.slug}${idx + 1}.jpg`] = asset;
+      map[`/${breed.slug}${idx + 1}`] = asset;
+      map[`${breed.slug}${idx + 1}.jpg`] = asset;
+      map[`${breed.slug}${idx + 1}`] = asset;
       map[`default-${breed.slug}-${idx + 1}`] = asset;
       map[`sample-${breed.slug}-${idx + 1}`] = asset;
     });
   }
 
+  // Canonical IDs & Stock Codes for All 10 Buffalo Breeds Catalog
+  map["BRD-001"] = murrah1;
+  map["brd-001"] = murrah1;
+  map["breed-catalog-murrah"] = murrah1;
+  map["BRD-002"] = niliRavi1;
+  map["brd-002"] = niliRavi1;
+  map["breed-catalog-nili-ravi"] = niliRavi1;
+  map["BRD-003"] = jaffarabadi1;
+  map["brd-003"] = jaffarabadi1;
+  map["breed-catalog-jaffarabadi"] = jaffarabadi1;
+  map["BRD-004"] = surti1;
+  map["brd-004"] = surti1;
+  map["breed-catalog-surti"] = surti1;
+  map["BRD-005"] = mahesana1;
+  map["brd-005"] = mahesana1;
+  map["breed-catalog-mehsana"] = mahesana1;
+  map["BRD-006"] = breedBanni1;
+  map["brd-006"] = breedBanni1;
+  map["breed-catalog-banni"] = breedBanni1;
+  map["BRD-007"] = pandharpuri1;
+  map["brd-007"] = pandharpuri1;
+  map["breed-catalog-pandharpuri"] = pandharpuri1;
+  map["BRD-008"] = nagpuri1;
+  map["brd-008"] = nagpuri1;
+  map["breed-catalog-nagpuri"] = nagpuri1;
+  map["BRD-009"] = bhadawari1;
+  map["brd-009"] = bhadawari1;
+  map["breed-catalog-bhadawari"] = bhadawari1;
+  map["BRD-010"] = godavari1;
+  map["brd-010"] = godavari1;
+  map["breed-catalog-godavari"] = godavari1;
+
+  // Canonical IDs & Stock Codes for Curated New Stocks (AKB-001 to AKB-008)
+  map["AKB-001"] = jaffarabadi1;
+  map["akb-001"] = jaffarabadi1;
+  map["new-stock-akb-001"] = jaffarabadi1;
+  map["AKB-002"] = jaffarabadi2;
+  map["akb-002"] = jaffarabadi2;
+  map["new-stock-akb-002"] = jaffarabadi2;
+  map["AKB-003"] = jaffarabadi1;
+  map["akb-003"] = jaffarabadi1;
+  map["new-stock-akb-003"] = jaffarabadi1;
+  map["AKB-004"] = jaffarabadi2;
+  map["akb-004"] = jaffarabadi2;
+  map["new-stock-akb-004"] = jaffarabadi2;
+  map["AKB-005"] = niliRavi1;
+  map["akb-005"] = niliRavi1;
+  map["new-stock-akb-005"] = niliRavi1;
+  map["AKB-006"] = breedBanni1;
+  map["akb-006"] = breedBanni1;
+  map["new-stock-akb-006"] = breedBanni1;
+  map["AKB-007"] = mahesana1;
+  map["akb-007"] = mahesana1;
+  map["new-stock-akb-007"] = mahesana1;
+  map["AKB-008"] = pandharpuri1;
+  map["akb-008"] = pandharpuri1;
+  map["new-stock-akb-008"] = pandharpuri1;
+
   // Common aliases and virtual paths to guarantee 100% valid Vite assets
+  map["/Jaffarabadi1.jpg"] = jaffarabadi1;
+  map["/Jaffarabadi2.jpg"] = jaffarabadi2;
+  map["/Jaffarabadi3.jpg"] = jaffarabadi1;
+  map["/Jaffarabadi4.jpg"] = jaffarabadi2;
+  map["/Jaffarabadi5.jpg"] = jaffarabadi1;
+  map["/jaffarabadi1.jpg"] = jaffarabadi1;
+  map["/jaffarabadi2.jpg"] = jaffarabadi2;
   map["/jaffarabadi3.jpg"] = jaffarabadi1;
   map["/jaffarabadi4.jpg"] = jaffarabadi2;
   map["/jaffarabadi5.jpg"] = jaffarabadi1;
+  map["jaffarabadi1.jpg"] = jaffarabadi1;
+  map["jaffarabadi2.jpg"] = jaffarabadi2;
+  map["jaffarabadi3.jpg"] = jaffarabadi1;
+  map["jaffarabadi4.jpg"] = jaffarabadi2;
   map["/jaffarabadi.jpg"] = jaffarabadi1;
+  map["jaffarabadi.jpg"] = jaffarabadi1;
+
+  map["/murrah1.jpg"] = murrah1;
+  map["/murrah2.jpg"] = murrah2;
   map["/murrah3.jpg"] = murrah1;
   map["/murrah4.jpg"] = murrah2;
+  map["murrah1.jpg"] = murrah1;
+  map["murrah2.jpg"] = murrah2;
   map["/murrah.jpg"] = murrah1;
-  map["/nili-ravi.jpg"] = niliRavi1;
+  map["murrah.jpg"] = murrah1;
+
+  map["/Nili-Ravi1.jpg"] = niliRavi1;
+  map["/Nili-Ravi2.jpg"] = niliRavi2;
+  map["/nili-ravi1.jpg"] = niliRavi1;
+  map["/nili-ravi2.jpg"] = niliRavi2;
   map["/nili-ravi3.jpg"] = niliRavi1;
   map["/nili-ravi4.jpg"] = niliRavi2;
+  map["/niliravi1.jpg"] = niliRavi1;
+  map["/niliravi2.jpg"] = niliRavi2;
+  map["nili-ravi1.jpg"] = niliRavi1;
+  map["nili-ravi2.jpg"] = niliRavi2;
+  map["niliravi1.jpg"] = niliRavi1;
+  map["niliravi2.jpg"] = niliRavi2;
+  map["/nili-ravi.jpg"] = niliRavi1;
+  map["nili-ravi.jpg"] = niliRavi1;
+
   map["/mehsana1.jpg"] = mahesana1;
   map["/mehsana2.jpg"] = mahesana2;
+  map["/mahesana1.jpg"] = mahesana1;
+  map["/mahesana2.jpg"] = mahesana2;
+  map["mehsana1.jpg"] = mahesana1;
+  map["mehsana2.jpg"] = mahesana2;
+  map["mahesana1.jpg"] = mahesana1;
+  map["mahesana2.jpg"] = mahesana2;
   map["/mehsana.jpg"] = mahesana1;
   map["/mahesana.jpg"] = mahesana1;
+  map["mehsana.jpg"] = mahesana1;
+  map["mahesana.jpg"] = mahesana1;
+
+  map["/surti1.jpg"] = surti1;
+  map["/surti2.jpg"] = surti2;
+  map["surti1.jpg"] = surti1;
+  map["surti2.jpg"] = surti2;
   map["/surti.jpg"] = surti1;
+  map["surti.jpg"] = surti1;
+
+  map["/banni1.jpg"] = breedBanni1;
+  map["/banni2.jpg"] = banni2;
+  map["banni1.jpg"] = breedBanni1;
+  map["banni2.jpg"] = banni2;
   map["/banni.jpg"] = breedBanni1;
+  map["banni.jpg"] = breedBanni1;
+
+  map["/pandharpuri1.jpg"] = pandharpuri1;
+  map["/pandharpuri2.jpg"] = pandharpuri2;
+  map["pandharpuri1.jpg"] = pandharpuri1;
+  map["pandharpuri2.jpg"] = pandharpuri2;
   map["/pandharpuri.jpg"] = pandharpuri1;
+  map["pandharpuri.jpg"] = pandharpuri1;
+
+  map["/nagpuri1.jpg"] = nagpuri1;
+  map["/nagpuri2.jpg"] = nagpuri2;
+  map["nagpuri1.jpg"] = nagpuri1;
+  map["nagpuri2.jpg"] = nagpuri2;
   map["/nagpuri.jpg"] = nagpuri1;
+  map["nagpuri.jpg"] = nagpuri1;
+
+  map["/bhadawari1.jpg"] = bhadawari1;
+  map["/bhadawari2.jpg"] = bhadawari2;
+  map["bhadawari1.jpg"] = bhadawari1;
+  map["bhadawari2.jpg"] = bhadawari2;
   map["/bhadawari.jpg"] = bhadawari1;
+  map["bhadawari.jpg"] = bhadawari1;
+
+  map["/godavari1.jpg"] = godavari1;
+  map["/godavari2.jpg"] = godavari2;
+  map["godavari1.jpg"] = godavari1;
+  map["godavari2.jpg"] = godavari2;
   map["/godavari.jpg"] = godavari1;
+  map["godavari.jpg"] = godavari1;
 
   return map;
 })();
@@ -369,9 +508,74 @@ export function getDefaultBreedImagePath(breedName?: string | null): string {
   return getBreedMetaByNameOrSlug(breedName).defaultImagePath;
 }
 
+/**
+ * Universal media asset resolver for buffalo photos.
+ * Guarantees a genuine Vite asset URL across dev, production, Netlify, and offline modes.
+ */
+export function resolveBuffaloMediaAsset(
+  rawUrl?: string | null,
+  breedName?: string | null,
+  photoIndex = 0
+): string | null {
+  if (!rawUrl || typeof rawUrl !== "string") return null;
+  const trimmed = rawUrl.trim();
+  if (!trimmed || trimmed === "none" || trimmed === "__none__") return null;
+
+  // 1. Direct or lowercase lookup in ALL_BREED_IMAGES_MAP
+  if (ALL_BREED_IMAGES_MAP[trimmed]) return ALL_BREED_IMAGES_MAP[trimmed];
+  if (ALL_BREED_IMAGES_MAP[trimmed.toLowerCase()]) return ALL_BREED_IMAGES_MAP[trimmed.toLowerCase()];
+
+  // 2. Normalized with/without leading slash
+  const withoutSlash = trimmed.replace(/^\/+/, "");
+  if (ALL_BREED_IMAGES_MAP[withoutSlash]) return ALL_BREED_IMAGES_MAP[withoutSlash];
+  if (ALL_BREED_IMAGES_MAP[withoutSlash.toLowerCase()]) return ALL_BREED_IMAGES_MAP[withoutSlash.toLowerCase()];
+
+  const withSlash = `/${withoutSlash}`;
+  if (ALL_BREED_IMAGES_MAP[withSlash]) return ALL_BREED_IMAGES_MAP[withSlash];
+  if (ALL_BREED_IMAGES_MAP[withSlash.toLowerCase()]) return ALL_BREED_IMAGES_MAP[withSlash.toLowerCase()];
+
+  // 3. Keyword/token fallback for paths, hashes, or old build assets
+  const cleanLower = trimmed.toLowerCase();
+  if (cleanLower.includes("jaffarabadi2") || cleanLower.includes("jaffarabadi4")) return jaffarabadi2;
+  if (cleanLower.includes("jaffarabadi")) return jaffarabadi1;
+  if (cleanLower.includes("nili") && (cleanLower.includes("2") || cleanLower.includes("4"))) return niliRavi2;
+  if (cleanLower.includes("nili")) return niliRavi1;
+  if (cleanLower.includes("murrah") && (cleanLower.includes("2") || cleanLower.includes("4"))) return murrah2;
+  if (cleanLower.includes("murrah")) return murrah1;
+  if (cleanLower.includes("surti") && cleanLower.includes("2")) return surti2;
+  if (cleanLower.includes("surti")) return surti1;
+  if ((cleanLower.includes("mehsana") || cleanLower.includes("mahesana")) && cleanLower.includes("2")) return mahesana2;
+  if (cleanLower.includes("mehsana") || cleanLower.includes("mahesana")) return mahesana1;
+  if (cleanLower.includes("banni") && cleanLower.includes("2")) return banni2;
+  if (cleanLower.includes("banni") || cleanLower.includes("breed-banni")) return breedBanni1;
+  if (cleanLower.includes("pandharpuri") && cleanLower.includes("2")) return pandharpuri2;
+  if (cleanLower.includes("pandharpuri")) return pandharpuri1;
+  if (cleanLower.includes("nagpuri") && cleanLower.includes("2")) return nagpuri2;
+  if (cleanLower.includes("nagpuri")) return nagpuri1;
+  if (cleanLower.includes("bhadawari") && cleanLower.includes("2")) return bhadawari2;
+  if (cleanLower.includes("bhadawari")) return bhadawari1;
+  if (cleanLower.includes("godavari") && cleanLower.includes("2")) return godavari2;
+  if (cleanLower.includes("godavari")) return godavari1;
+
+  // 4. Custom runtime uploads (Base64 data URIs, blob URLs, or live CDN URLs)
+  if (
+    trimmed.startsWith("data:") ||
+    trimmed.startsWith("blob:") ||
+    (trimmed.startsWith("http://") && !trimmed.includes("/src/assets/")) ||
+    (trimmed.startsWith("https://") && !trimmed.includes("/src/assets/"))
+  ) {
+    return trimmed;
+  }
+
+  // 5. Fallback to breed meta
+  const meta = getBreedMetaByNameOrSlug(breedName);
+  return meta.photoAssets[photoIndex % meta.photoAssets.length] || meta.image;
+}
+
 export function resolveBuffaloImage(
   buffalo: {
     id?: string;
+    stock_code?: string;
     name?: string;
     breed?: string;
     image_url?: string | null;
@@ -382,53 +586,27 @@ export function resolveBuffaloImage(
 ): string {
   const meta = getBreedMetaByNameOrSlug(buffalo.breed || fallbackBreedSlugOrName);
 
+  // 1. Try resolving primary image_url if not explicitly removed
   if (buffalo.image_url) {
-    const trimmed = buffalo.image_url.trim();
-    if (trimmed && trimmed !== "none" && trimmed !== "__none__") {
-      if (ALL_BREED_IMAGES_MAP[trimmed]) {
-        return ALL_BREED_IMAGES_MAP[trimmed];
-      }
-      if (ALL_BREED_IMAGES_MAP[trimmed.toLowerCase()]) {
-        return ALL_BREED_IMAGES_MAP[trimmed.toLowerCase()];
-      }
-      if (
-        trimmed.startsWith("data:") ||
-        trimmed.startsWith("blob:") ||
-        trimmed.startsWith("http://") ||
-        trimmed.startsWith("https://") ||
-        trimmed.includes("/assets/")
-      ) {
-        return trimmed;
-      }
-    }
+    const resolved = resolveBuffaloMediaAsset(buffalo.image_url, buffalo.breed || fallbackBreedSlugOrName, index);
+    if (resolved) return resolved;
   }
 
-  // If main photo was removed or not set, but Photo 2 exists, show Photo 2 on the card
+  // 2. If main photo was removed or not set, but Photo 2 exists, show Photo 2 on the card
   if (Array.isArray(buffalo.extra_images) && buffalo.extra_images.length > 0 && buffalo.extra_images[0]) {
-    const extraTrimmed = buffalo.extra_images[0].trim();
-    if (extraTrimmed && extraTrimmed !== "none" && extraTrimmed !== "__none__") {
-      if (ALL_BREED_IMAGES_MAP[extraTrimmed]) {
-        return ALL_BREED_IMAGES_MAP[extraTrimmed];
-      }
-      if (ALL_BREED_IMAGES_MAP[extraTrimmed.toLowerCase()]) {
-        return ALL_BREED_IMAGES_MAP[extraTrimmed.toLowerCase()];
-      }
-      if (
-        extraTrimmed.startsWith("data:") ||
-        extraTrimmed.startsWith("blob:") ||
-        extraTrimmed.startsWith("http://") ||
-        extraTrimmed.startsWith("https://") ||
-        extraTrimmed.includes("/assets/")
-      ) {
-        return extraTrimmed;
-      }
-    }
+    const resolvedExtra = resolveBuffaloMediaAsset(buffalo.extra_images[0], buffalo.breed || fallbackBreedSlugOrName, 1);
+    if (resolvedExtra) return resolvedExtra;
   }
 
+  // 3. Stock code or ID lookup in ALL_BREED_IMAGES_MAP (e.g. AKB-001, new-stock-akb-001, BRD-001)
+  if (buffalo.stock_code && ALL_BREED_IMAGES_MAP[buffalo.stock_code.toUpperCase()]) {
+    return ALL_BREED_IMAGES_MAP[buffalo.stock_code.toUpperCase()];
+  }
   if (buffalo.id && ALL_BREED_IMAGES_MAP[buffalo.id]) {
     return ALL_BREED_IMAGES_MAP[buffalo.id];
   }
 
+  // 4. Numbered name fallback
   const match = (buffalo.name || "").match(/\d+/);
   if (match) {
     const idx = parseInt(match[0], 10) - 1;
@@ -436,6 +614,7 @@ export function resolveBuffaloImage(
       return meta.photoAssets[idx];
     }
   }
+
   return meta.photoAssets[index % meta.photoAssets.length] || meta.image;
 }
 
@@ -451,12 +630,13 @@ export function resolveAdminBuffaloThumb(
  * Returns genuine buffalo images for any buffalo listing (strictly 1 or 2 photos max).
  * - If only 1 image was selected or Photo 2 was removed, returns exactly that 1 photo.
  * - If Photo 2 is present, returns exactly 2 photos.
- * - Never injects unwanted filler photos from other breeds.
+ * - Respects canonical stock profiles (AKB-001 to AKB-008) so New Stocks always have genuine photos.
  */
 export function getBuffaloSliderImages(
   buffaloOrBreed:
     | {
         id?: string;
+        stock_code?: string;
         name?: string;
         breed?: string;
         image_url?: string | null;
@@ -480,24 +660,6 @@ export function getBuffaloSliderImages(
     typeof buffaloOrBreed === "string" ? buffaloOrBreed : fallbackBreedOrImageUrl || undefined;
   const meta = getBreedMetaByNameOrSlug(buffalo.breed || fallbackBreedSlugOrName);
 
-  const resolveSingleImg = (rawUrl?: string | null): string | null => {
-    if (!rawUrl || typeof rawUrl !== "string") return null;
-    const trimmed = rawUrl.trim();
-    if (!trimmed || trimmed === "none" || trimmed === "__none__") return null;
-    if (ALL_BREED_IMAGES_MAP[trimmed]) return ALL_BREED_IMAGES_MAP[trimmed];
-    if (ALL_BREED_IMAGES_MAP[trimmed.toLowerCase()]) return ALL_BREED_IMAGES_MAP[trimmed.toLowerCase()];
-    if (
-      trimmed.startsWith("data:") ||
-      trimmed.startsWith("blob:") ||
-      trimmed.startsWith("http://") ||
-      trimmed.startsWith("https://") ||
-      trimmed.includes("/assets/")
-    ) {
-      return trimmed;
-    }
-    return meta.photoAssets[0] || meta.image;
-  };
-
   const isPhoto1ExplicitlyRemoved =
     buffalo.image_url === "" ||
     buffalo.image_url === null ||
@@ -512,7 +674,7 @@ export function getBuffaloSliderImages(
   // 1. Resolve Photo 1 if not explicitly removed
   if (!isPhoto1ExplicitlyRemoved) {
     if (buffalo.image_url) {
-      const resolved = resolveSingleImg(buffalo.image_url);
+      const resolved = resolveBuffaloMediaAsset(buffalo.image_url, buffalo.breed || fallbackBreedSlugOrName, index);
       if (resolved && !result.includes(resolved)) {
         result.push(resolved);
       }
@@ -527,7 +689,7 @@ export function getBuffaloSliderImages(
   // 2. Resolve Photo 2 from extra_images if present
   if (Array.isArray(buffalo.extra_images) && buffalo.extra_images.length > 0) {
     for (const extra of buffalo.extra_images) {
-      const resolved = resolveSingleImg(extra);
+      const resolved = resolveBuffaloMediaAsset(extra, buffalo.breed || fallbackBreedSlugOrName, 1);
       if (resolved && !result.includes(resolved)) {
         result.push(resolved);
       }
@@ -544,10 +706,28 @@ export function getBuffaloSliderImages(
 
   // 4. Default seed fallback if extra_images is undefined: provide breed second photo
   if (buffalo.extra_images === undefined && result.length < 2) {
-    for (const asset of meta.photoAssets) {
-      if (asset && !result.includes(asset)) {
-        result.push(asset);
-        if (result.length >= 2) break;
+    // If stock_code matches AKB, provide alternating photo
+    const code = (buffalo.stock_code || "").toUpperCase();
+    if (code === "AKB-001" || code === "AKB-003") {
+      if (!result.includes(jaffarabadi2)) result.push(jaffarabadi2);
+    } else if (code === "AKB-002" || code === "AKB-004") {
+      if (!result.includes(jaffarabadi1)) result.push(jaffarabadi1);
+    } else if (code === "AKB-005") {
+      if (!result.includes(niliRavi2)) result.push(niliRavi2);
+    } else if (code === "AKB-006") {
+      if (!result.includes(banni2)) result.push(banni2);
+    } else if (code === "AKB-007") {
+      if (!result.includes(mahesana2)) result.push(mahesana2);
+    } else if (code === "AKB-008") {
+      if (!result.includes(pandharpuri2)) result.push(pandharpuri2);
+    }
+
+    if (result.length < 2) {
+      for (const asset of meta.photoAssets) {
+        if (asset && !result.includes(asset)) {
+          result.push(asset);
+          if (result.length >= 2) break;
+        }
       }
     }
     if (result.length < 2) {
@@ -623,8 +803,8 @@ export const DEFAULT_NEW_STOCK_PROFILES: NewStockBuffaloRecord[] = [
     health_records: "Vaccinated & Certified",
     description:
       "Heavy Gir-lineage 2nd lactation Jaffarabadi buffalo yielding 15 L/day with healthy active calf, drooping horns, broad prominent forehead, and high 8.5% butterfat milk.",
-    image_url: "/Jaffarabadi1.jpg",
-    extra_images: ["/Jaffarabadi2.jpg"],
+    image_url: jaffarabadi1,
+    extra_images: [jaffarabadi2],
     video_url: galleryVideo,
     is_available: true,
     status: "available",
@@ -649,8 +829,8 @@ export const DEFAULT_NEW_STOCK_PROFILES: NewStockBuffaloRecord[] = [
     health_records: "Vaccinated & Vet Certified",
     description:
       "Freshly calved 1st lactation Jaffarabadi dairy buffalo with strong maternal build, calm milking temperament, and steady 12 L/day rich A2 milk yield.",
-    image_url: "/Jaffarabadi2.jpg",
-    extra_images: ["/Jaffarabadi1.jpg"],
+    image_url: jaffarabadi2,
+    extra_images: [jaffarabadi1],
     video_url: galleryVideo2,
     is_available: true,
     status: "available",
@@ -675,8 +855,8 @@ export const DEFAULT_NEW_STOCK_PROFILES: NewStockBuffaloRecord[] = [
     health_records: "Vaccinated & Dewormed",
     description:
       "Purebred heavy Saurashtra-lineage Jaffarabadi buffalo in 5 months confirmed pregnancy, broad bone frame, thick skin coat, and verified vet clearance.",
-    image_url: "/Jaffarabadi1.jpg",
-    extra_images: ["/Jaffarabadi2.jpg"],
+    image_url: jaffarabadi1,
+    extra_images: [jaffarabadi2],
     video_url: galleryVideo3,
     is_available: true,
     status: "available",
@@ -701,8 +881,8 @@ export const DEFAULT_NEW_STOCK_PROFILES: NewStockBuffaloRecord[] = [
     health_records: "Vaccinated & Vet Certified",
     description:
       "Grand champion 3rd lactation Jaffarabadi buffalo yielding 16 L/day high butterfat milk, magnificent downward curved horns, massive dairy frame, and healthy calf.",
-    image_url: "/Jaffarabadi2.jpg",
-    extra_images: ["/Jaffarabadi1.jpg"],
+    image_url: jaffarabadi2,
+    extra_images: [jaffarabadi1],
     video_url: galleryVideo4,
     is_available: true,
     status: "available",
@@ -727,8 +907,8 @@ export const DEFAULT_NEW_STOCK_PROFILES: NewStockBuffaloRecord[] = [
     health_records: "Vaccinated & Vet Certified",
     description:
       "Authentic Panch Kalyani Nili-Ravi buffalo with all 5 white markings, gentle milking nature, and steady 12 L/day yield.",
-    image_url: "/Nili-Ravi1.jpg",
-    extra_images: ["/Nili-Ravi2.jpg"],
+    image_url: niliRavi1,
+    extra_images: [niliRavi2],
     video_url: galleryVideo4,
     is_available: true,
     status: "available",
@@ -753,8 +933,8 @@ export const DEFAULT_NEW_STOCK_PROFILES: NewStockBuffaloRecord[] = [
     health_records: "Vaccinated",
     description:
       "Resilient Kutch-lineage Banni dairy buffalo producing 13 L/day with high disease resistance and rich SNF milk.",
-    image_url: "/banni1.jpg",
-    extra_images: ["/banni2.jpg"],
+    image_url: breedBanni1,
+    extra_images: [banni2],
     video_url: galleryVideo5,
     is_available: true,
     status: "available",
@@ -779,8 +959,8 @@ export const DEFAULT_NEW_STOCK_PROFILES: NewStockBuffaloRecord[] = [
     health_records: "Vaccinated",
     description:
       "High-efficiency Mehsana crossbreed buffalo with long lactation persistence and calm shed behavior.",
-    image_url: "/mahesana1.jpg",
-    extra_images: ["/mahesana2.jpg"],
+    image_url: mahesana1,
+    extra_images: [mahesana2],
     video_url: galleryVideo6,
     is_available: true,
     status: "available",
@@ -805,8 +985,8 @@ export const DEFAULT_NEW_STOCK_PROFILES: NewStockBuffaloRecord[] = [
     health_records: "Vaccinated & Vet Certified",
     description:
       "Traditional Maharashtra Pandharpuri buffalo prized for rich A2 milk, heat tolerance, and economical feed requirement.",
-    image_url: "/pandharpuri1.jpg",
-    extra_images: ["/pandharpuri2.jpg"],
+    image_url: pandharpuri1,
+    extra_images: [pandharpuri2],
     video_url: galleryVideo7,
     is_available: true,
     status: "available",
@@ -834,8 +1014,8 @@ export const DEFAULT_BREED_CATALOG_PROFILES: NewStockBuffaloRecord[] = [
     health_records: "Vaccinated & Vet Certified",
     description:
       "Purebred Haryana-lineage Murrah buffalo known for the highest milk yield among all Indian buffalo breeds, jet-black coat, tightly curled horns, and 14 L/day verified production.",
-    image_url: "/murrah1.jpg",
-    extra_images: ["/murrah2.jpg"],
+    image_url: murrah1,
+    extra_images: [murrah2],
     video_url: galleryVideo,
     is_available: true,
     status: "available",
@@ -860,8 +1040,8 @@ export const DEFAULT_BREED_CATALOG_PROFILES: NewStockBuffaloRecord[] = [
     health_records: "Vaccinated & Vet Certified",
     description:
       "Authentic Panch Kalyani Nili-Ravi breed with characteristic white markings, docile temperament, and consistent 12 L/day high-SNF milk production.",
-    image_url: "/Nili-Ravi1.jpg",
-    extra_images: ["/Nili-Ravi2.jpg"],
+    image_url: niliRavi1,
+    extra_images: [niliRavi2],
     video_url: galleryVideo4,
     is_available: true,
     status: "available",
@@ -886,8 +1066,8 @@ export const DEFAULT_BREED_CATALOG_PROFILES: NewStockBuffaloRecord[] = [
     health_records: "Vaccinated & Dewormed",
     description:
       "Heaviest purebred Gir-region Jaffarabadi buffalo featuring a massive body frame, distinctive drooping horn crown, and rich 8.5%+ butterfat milk.",
-    image_url: "/Jaffarabadi1.jpg",
-    extra_images: ["/Jaffarabadi2.jpg"],
+    image_url: jaffarabadi1,
+    extra_images: [jaffarabadi2],
     video_url: galleryVideo2,
     is_available: true,
     status: "available",
@@ -912,8 +1092,8 @@ export const DEFAULT_BREED_CATALOG_PROFILES: NewStockBuffaloRecord[] = [
     health_records: "Vaccinated",
     description:
       "Compact, economical Surti dairy breed with sickle-shaped horns, low feed maintenance cost, and high-fat creamy milk ideal for dairy farmers.",
-    image_url: "/surti1.jpg",
-    extra_images: ["/surti2.jpg"],
+    image_url: surti1,
+    extra_images: [surti2],
     video_url: galleryVideo3,
     is_available: true,
     status: "available",
@@ -938,8 +1118,8 @@ export const DEFAULT_BREED_CATALOG_PROFILES: NewStockBuffaloRecord[] = [
     health_records: "Vaccinated & Vet Certified",
     description:
       "Superior cross of Murrah and Surti breeds prized for long lactation persistence, regular breeding cycle, and 11 L/day steady milk yield.",
-    image_url: "/mahesana1.jpg",
-    extra_images: ["/mahesana2.jpg"],
+    image_url: mahesana1,
+    extra_images: [mahesana2],
     video_url: galleryVideo4,
     is_available: true,
     status: "available",
@@ -964,8 +1144,8 @@ export const DEFAULT_BREED_CATALOG_PROFILES: NewStockBuffaloRecord[] = [
     health_records: "Vaccinated & Vet Certified",
     description:
       "Famous Kutch-origin Banni buffalo breed prized for 13 L/day high milk yield, climate resilience, strong immunity, and superior genetic vigour.",
-    image_url: "/banni1.jpg",
-    extra_images: ["/banni2.jpg"],
+    image_url: breedBanni1,
+    extra_images: [banni2],
     video_url: galleryVideo5,
     is_available: true,
     status: "available",
@@ -990,8 +1170,8 @@ export const DEFAULT_BREED_CATALOG_PROFILES: NewStockBuffaloRecord[] = [
     health_records: "Vaccinated & Vet Certified",
     description:
       "Pride of Maharashtra with signature long curved horns, hardy constitution, and rich A2 dairy milk suited for commercial and family farms.",
-    image_url: "/pandharpuri1.jpg",
-    extra_images: ["/pandharpuri2.jpg"],
+    image_url: pandharpuri1,
+    extra_images: [pandharpuri2],
     video_url: galleryVideo6,
     is_available: true,
     status: "available",
@@ -1016,8 +1196,8 @@ export const DEFAULT_BREED_CATALOG_PROFILES: NewStockBuffaloRecord[] = [
     health_records: "Vaccinated",
     description:
       "Traditional Vidarbha & Maharashtra Nagpuri breed known for exceptional heat tolerance, low maintenance, and sweet, thick creamy milk.",
-    image_url: "/nagpuri1.jpg",
-    extra_images: ["/nagpuri2.jpg"],
+    image_url: nagpuri1,
+    extra_images: [nagpuri2],
     video_url: galleryVideo7,
     is_available: true,
     status: "available",
@@ -1042,8 +1222,8 @@ export const DEFAULT_BREED_CATALOG_PROFILES: NewStockBuffaloRecord[] = [
     health_records: "Vaccinated & Dewormed",
     description:
       "Copper-toned Bhadawari breed famous across India for the highest butterfat content (up to 12.5% fat), making it the #1 choice for pure ghee production.",
-    image_url: "/bhadawari1.jpg",
-    extra_images: ["/bhadawari2.jpg"],
+    image_url: bhadawari1,
+    extra_images: [bhadawari2],
     video_url: galleryVideo,
     is_available: true,
     status: "available",
@@ -1068,8 +1248,8 @@ export const DEFAULT_BREED_CATALOG_PROFILES: NewStockBuffaloRecord[] = [
     health_records: "Vaccinated & Vet Certified",
     description:
       "High-yielding Murrah-cross delta Godavari breed prized for long lactation cycles, high disease resistance, and calm milking temperament.",
-    image_url: "/godavari1.jpg",
-    extra_images: ["/godavari2.jpg"],
+    image_url: godavari1,
+    extra_images: [godavari2],
     video_url: galleryVideo6,
     is_available: true,
     status: "available",
@@ -1167,7 +1347,11 @@ export function enrichBuffaloToNewStock(
   const resolvedPhoto1 = hasExplicitNoPhoto1
     ? ""
     : raw.image_url !== undefined
-    ? raw.image_url
+    ? resolveBuffaloImage(
+        { id: raw.id, stock_code: formattedCode, breed: breedName, image_url: raw.image_url },
+        index,
+        breedName
+      )
     : defaultMatch?.image_url || getDefaultBreedImagePath(breedName);
 
   const hasExplicitNoExtraImages =
@@ -1179,6 +1363,8 @@ export function enrichBuffaloToNewStock(
     ? []
     : Array.isArray(raw.extra_images) && raw.extra_images.length > 0
     ? raw.extra_images
+        .map((img) => resolveBuffaloMediaAsset(img, breedName, 1))
+        .filter((x): x is string => Boolean(x))
     : defaultMatch?.extra_images || [];
 
   return {

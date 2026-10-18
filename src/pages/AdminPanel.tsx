@@ -7957,6 +7957,12 @@ const AdminPanel = () => {
                         src={currentImg}
                         alt={previewBuffaloDetail.name}
                         className="w-full h-full object-cover object-top"
+                        onError={(e) => {
+                          const fallback = resolveBuffaloImage(previewBuffaloDetail, previewBuffaloMediaIdx, previewBuffaloDetail.breed);
+                          if (fallback && (e.currentTarget as HTMLImageElement).src !== fallback) {
+                            (e.currentTarget as HTMLImageElement).src = fallback;
+                          }
+                        }}
                       />
                       <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-green-dark/80 backdrop-blur-sm text-gold font-sans text-xs font-bold border border-gold/30">
                         {(previewBuffaloMediaIdx % totalSlides) + 1}/{totalSlides}
@@ -7989,6 +7995,12 @@ const AdminPanel = () => {
                           src={thumb}
                           alt={`Thumbnail ${idx + 1}`}
                           className="w-full h-full object-cover object-top"
+                          onError={(e) => {
+                            const fallback = resolveBuffaloImage(previewBuffaloDetail, idx, previewBuffaloDetail.breed);
+                            if (fallback && (e.currentTarget as HTMLImageElement).src !== fallback) {
+                              (e.currentTarget as HTMLImageElement).src = fallback;
+                            }
+                          }}
                         />
                       </button>
                     );

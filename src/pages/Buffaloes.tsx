@@ -465,10 +465,10 @@ const Buffaloes = () => {
     stock: NewStockBuffaloRecord,
     isModal = false
   ) => {
-    const images = activeStockImages;
+    const images = getBuffaloSliderImages(stock, 0, stock.breed);
     const hasImages = images.length > 0;
     const currentImage = hasImages
-      ? images[activeMediaIndex % images.length]
+      ? images[activeMediaIndex % images.length] || resolveBuffaloImage(stock, activeMediaIndex, stock.breed)
       : resolveBuffaloImage(stock, 0, stock.breed);
     const hasThumbStrip = images.length > 1 || Boolean(stock.video_url);
     const isNewArrival = Boolean(stock.is_new_stock);
@@ -549,6 +549,12 @@ const Buffaloes = () => {
                     className={`w-full h-full object-cover object-top transition-all duration-300 ${
                       isOut ? "grayscale-[25%] opacity-90" : ""
                     }`}
+                    onError={(e) => {
+                      const fallback = resolveBuffaloImage(stock, activeMediaIndex, stock.breed);
+                      if (fallback && (e.currentTarget as HTMLImageElement).src !== fallback) {
+                        (e.currentTarget as HTMLImageElement).src = fallback;
+                      }
+                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent pointer-events-none" />
 
@@ -638,6 +644,12 @@ const Buffaloes = () => {
                         src={thumbUrl}
                         alt={`Thumbnail ${idx + 1}`}
                         className="w-full h-full object-cover object-top"
+                        onError={(e) => {
+                          const fallback = resolveBuffaloImage(stock, idx, stock.breed);
+                          if (fallback && (e.currentTarget as HTMLImageElement).src !== fallback) {
+                            (e.currentTarget as HTMLImageElement).src = fallback;
+                          }
+                        }}
                       />
                     </button>
                   );
@@ -1205,6 +1217,12 @@ const Buffaloes = () => {
                             isOut ? "grayscale-[25%] opacity-90" : ""
                           }`}
                           loading="lazy"
+                          onError={(e) => {
+                            const fallback = resolveBuffaloImage(stock, idx, stock.breed);
+                            if (fallback && (e.currentTarget as HTMLImageElement).src !== fallback) {
+                              (e.currentTarget as HTMLImageElement).src = fallback;
+                            }
+                          }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/15" />
 
