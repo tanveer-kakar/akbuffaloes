@@ -1499,7 +1499,32 @@ export function saveBuffaloLiveOverride(
       );
     }
   } catch {
-    // ignore storage quota errors
+    try {
+      // If storage quota exceeded, prune any oversized data URIs (> 100KB) and re-save safely
+      const existing = readBuffaloLiveOverrides();
+      const cleaned: Record<string, Partial<NewStockBuffaloRecord> & { id: string; updated_at?: string }> = {};
+      for (const [k, v] of Object.entries(existing)) {
+        const item = { ...v };
+        if (typeof item.video_url === "string" && item.video_url.length > 100000) {
+          item.video_url = null;
+        }
+        if (typeof item.image_url === "string" && item.image_url.length > 100000) {
+          item.image_url = "";
+        }
+        cleaned[k] = item;
+      }
+      cleaned[record.id] = {
+        ...cleaned[record.id],
+        ...record,
+        updated_at: new Date().toISOString(),
+      };
+      if (typeof cleaned[record.id].video_url === "string" && (cleaned[record.id].video_url as string).length > 100000) {
+        cleaned[record.id].video_url = null;
+      }
+      window.localStorage.setItem(BUFFALO_LIVE_OVERRIDES_KEY, JSON.stringify(cleaned));
+    } catch {
+      // ignore storage quota errors
+    }
   }
   notifyBuffaloesUpdated();
 }

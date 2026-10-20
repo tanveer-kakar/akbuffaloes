@@ -946,7 +946,12 @@ const AdminPanel = () => {
             pregnancy_status: item.pregnancy_status || enriched.pregnancy_status,
             calf_details: item.calf_details || enriched.calf_details,
             health_records: item.health_records || enriched.health_records,
-            video_url: item.video_url || enriched.video_url,
+            video_url:
+              item.video_url === null || item.video_url === "" || item.video_url === "none" || item.video_url === "__none__"
+                ? null
+                : item.video_url !== undefined
+                ? item.video_url
+                : enriched.video_url,
             is_negotiable: item.is_negotiable ?? enriched.is_negotiable,
             is_new_stock: enriched.is_new_stock,
             status: resolvedStatus,
@@ -6179,8 +6184,8 @@ const AdminPanel = () => {
                       <TableCell>
                         <Badge className={`text-[10px] capitalize ${a.user_role === "admin" ? "bg-destructive/10 text-destructive border-destructive/30" : "bg-primary/10 text-primary border-primary/30"}`}>{a.user_role}</Badge>
                       </TableCell>
-                      <TableCell className="font-sans text-[10px] sm:text-xs capitalize">{a.action.replace(/_/g, " ")}</TableCell>
-                      <TableCell className="font-sans text-xs capitalize hidden sm:table-cell">{a.entity_type.replace(/_/g, " ")}</TableCell>
+                      <TableCell className="font-sans text-[10px] sm:text-xs capitalize">{a.action ? a.action.replace(/_/g, " ") : "—"}</TableCell>
+                      <TableCell className="font-sans text-xs capitalize hidden sm:table-cell">{a.entity_type ? a.entity_type.replace(/_/g, " ") : "—"}</TableCell>
                       <TableCell className="font-sans text-xs hidden md:table-cell max-w-[200px] truncate">{a.details || "—"}</TableCell>
                       <TableCell className="text-right pr-3">
                         <div className="flex items-center justify-end gap-1">
@@ -6252,7 +6257,7 @@ const AdminPanel = () => {
                   {activityEditLog && (
                     <div className="text-[11px] text-muted-foreground space-y-0.5 pt-1 border-t border-border">
                       <p><span className="font-semibold">User:</span> {activityEditLog.user_email || "—"}</p>
-                      <p><span className="font-semibold">Entity:</span> {activityEditLog.entity_type.replace(/_/g, " ")}</p>
+                      <p><span className="font-semibold">Entity:</span> {(activityEditLog.entity_type || "").replace(/_/g, " ") || "—"}</p>
                       <p><span className="font-semibold">Date:</span> {new Date(activityEditLog.created_at).toLocaleString()}</p>
                     </div>
                   )}
@@ -7594,7 +7599,7 @@ const AdminPanel = () => {
                           Or Paste Custom Video URL (.mp4 / .webm)
                         </Label>
                         <Input
-                          value={buffaloForm.video_url}
+                          value={buffaloForm.video_url || ""}
                           onChange={(e) =>
                             setBuffaloForm((prev) => ({ ...prev, video_url: e.target.value }))
                           }
