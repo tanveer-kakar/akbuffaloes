@@ -330,7 +330,7 @@ export const FestivalThemeProvider = ({ children }: { children: ReactNode }) => 
 
       const { error } = await backend
         .from("festival_settings")
-        .insert(nextSettings as unknown as Record<string, unknown>);
+        .upsert(nextSettings as unknown as Record<string, unknown>);
       if (error) {
         return { error: error.message };
       }
@@ -351,7 +351,7 @@ export const FestivalThemeProvider = ({ children }: { children: ReactNode }) => 
 
       const { error } = await backend
         .from("festival_occasions")
-        .insert(payload as unknown as Record<string, unknown>);
+        .upsert(payload as unknown as Record<string, unknown>);
       if (error) {
         return { error: error.message };
       }
@@ -366,7 +366,7 @@ export const FestivalThemeProvider = ({ children }: { children: ReactNode }) => 
     async (occasionId: string): Promise<{ error: string | null }> => {
       const { error } = await backend
         .from("festival_occasions")
-        .insert({ id: occasionId, is_deleted: true, updated_at: new Date().toISOString() });
+        .upsert({ id: occasionId, is_deleted: true, updated_at: new Date().toISOString() });
       if (error) {
         return { error: error.message };
       }

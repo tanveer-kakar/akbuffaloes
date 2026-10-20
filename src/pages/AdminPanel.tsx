@@ -340,6 +340,7 @@ const AdminPanel = () => {
     occasions: festivalOccasions,
     settings: festivalSettings,
     liveActiveOccasion: festivalActiveOccasion,
+    saveOccasionRecord,
   } = useFestivalTheme();
 
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -2935,6 +2936,13 @@ const AdminPanel = () => {
     try {
       sessionStorage.removeItem("ak_buffaloes_dismissed_popups_v2");
       window.dispatchEvent(new CustomEvent("ak-promo-popups-updated"));
+      try {
+        const bc = new BroadcastChannel("ak_buffalo_promo_bc");
+        bc.postMessage({ type: "popup_updated" });
+        bc.close();
+      } catch {
+        // ignore BroadcastChannel errors
+      }
     } catch {
       // ignore storage errors
     }
@@ -2964,7 +2972,7 @@ const AdminPanel = () => {
     } else {
       const { data, error } = await backend
         .from("promo_popups")
-        .insert(updatedPayload)
+        .upsert(updatedPayload)
         .select()
         .single();
       if (error) {
@@ -2972,7 +2980,20 @@ const AdminPanel = () => {
         return;
       }
       const saved = (data as unknown as PromoPopupDbRecord) || updatedPayload;
-      setPromoPopupDbRecords((prev) => [saved, ...prev]);
+      setPromoPopupDbRecords((prev) => [saved, ...prev.filter((r) => r.id !== saved.id)]);
+    }
+
+    if (card.festival_id) {
+      const targetOcc = festivalOccasions.find((o) => o.id === card.festival_id);
+      if (targetOcc) {
+        void saveOccasionRecord({
+          ...targetOcc,
+          theme: {
+            ...targetOcc.theme,
+            show_in_popup: nextActive,
+          },
+        });
+      }
     }
 
     notifyPromoPopupsUpdated();
@@ -4985,7 +5006,7 @@ const AdminPanel = () => {
               ) : (
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                   {filteredPromoPopups.map((card, idx) => {
-                    const isActive = card.is_active !== false;
+                    const isActive = Boolean(card.is_active);
                     const hasManualOverride = promoPopupDbRecords.some(
                       (r) => r.id === card.id && !r.is_deleted && typeof r.is_active === "boolean"
                     );

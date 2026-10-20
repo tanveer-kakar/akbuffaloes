@@ -901,13 +901,26 @@ const InstagramPromoPopup = ({ ready = true }: InstagramPromoPopupProps) => {
   useEffect(() => {
     void loadPromoPopups();
     const handleCustomUpdate = () => {
+      setHasShownOnLoad(false);
       void loadPromoPopups();
     };
     window.addEventListener("ak-promo-popups-updated", handleCustomUpdate);
     window.addEventListener("focus", handleCustomUpdate);
+
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel("ak_buffalo_promo_bc");
+      bc.onmessage = () => {
+        handleCustomUpdate();
+      };
+    } catch {
+      bc = null;
+    }
+
     return () => {
       window.removeEventListener("ak-promo-popups-updated", handleCustomUpdate);
       window.removeEventListener("focus", handleCustomUpdate);
+      if (bc) bc.close();
     };
   }, [loadPromoPopups]);
 
@@ -927,9 +940,16 @@ const InstagramPromoPopup = ({ ready = true }: InstagramPromoPopupProps) => {
       ) {
         return true;
       }
-      return card.is_active === true;
+      return Boolean(card.is_active);
     });
   }, [allCards, dbRecords, activeOccasion]);
+
+  // If all cards are toggled OFF by admin, immediately close active popup
+  useEffect(() => {
+    if (activeCards.length === 0 && isOpen) {
+      setIsOpen(false);
+    }
+  }, [activeCards.length, isOpen]);
 
   useEffect(() => {
     if (!ready || !loadedFromDb || isAdminRoute || hasShownOnLoad) return;

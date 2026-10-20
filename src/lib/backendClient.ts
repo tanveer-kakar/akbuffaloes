@@ -5,6 +5,11 @@ import {
   notifyBuffaloesUpdated,
 } from "@/data/buffaloBreedsData";
 import { galleryItems } from "@/data/galleryData";
+import {
+  DEFAULT_FESTIVAL_OCCASIONS,
+  DEFAULT_FESTIVAL_SETTINGS,
+} from "@/data/festivalCalendarData";
+import { defaultPromoPopupCards } from "@/data/promoPopupData";
 
 type BackendError = { message: string };
 type BackendResult<T = unknown> = { data: T; error: BackendError | null; count?: number | null };
@@ -152,6 +157,7 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
     return this;
   }
   insert(values: object | object[]) { this.operation = "insert"; this.values = values; return this; }
+  upsert(values: object | object[]) { this.operation = "upsert"; this.values = values; return this; }
   update(values: object) { this.operation = "update"; this.values = values; return this; }
   delete() { this.operation = "delete"; return this; }
   eq(column: string, value: unknown) { this.filters.push({ column, value }); return this; }
@@ -229,6 +235,25 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
         }
       }
 
+      // Auto-sanitize / migrate festival settings if present in localStorage
+      if (this.table === "festival_settings" && Array.isArray(records) && records.length > 0) {
+        let changed = false;
+        records = records.map((rec) => {
+          if (rec.master_enabled === undefined) {
+            changed = true;
+            return {
+              ...DEFAULT_FESTIVAL_SETTINGS,
+              ...rec,
+              master_enabled: rec.is_enabled !== undefined ? Boolean(rec.is_enabled) : true,
+            };
+          }
+          return rec;
+        });
+        if (changed) {
+          localStorage.setItem(storageKey, JSON.stringify(records));
+        }
+      }
+
       // Auto-seed table on static deployment
       if (!raw || records.length === 0) {
         if (this.table === "buffalo_listings") {
@@ -252,14 +277,13 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
           }];
           localStorage.setItem(storageKey, JSON.stringify(records));
         } else if (this.table === "festival_settings") {
-          records = [{ id: "global", active_festival_id: null, is_enabled: false, auto_detect: true }];
+          records = [{ ...DEFAULT_FESTIVAL_SETTINGS }] as unknown as DataRecord[];
           localStorage.setItem(storageKey, JSON.stringify(records));
         } else if (this.table === "festival_occasions") {
-          records = [
-            { id: "diwali", name: "Diwali Special", title: "Diwali Dhamaka Farm Discounts", banner_text: "Diwali Mubarak! Exclusive discounts on certified Murrah buffaloes.", start_date: "2026-10-25", end_date: "2026-11-05", is_active: false },
-            { id: "eid", name: "Eid Mubarak", title: "Eid Celebration Pure Dairy Stock", banner_text: "Eid Mubarak! Premium lactation buffaloes available with doorstep delivery.", start_date: "2026-03-28", end_date: "2026-04-05", is_active: false },
-            { id: "baisakhi", name: "Baisakhi Mela", title: "Baisakhi Harvest Season Mela", banner_text: "Happy Baisakhi! Verified high-yield dairy livestock.", start_date: "2026-04-10", end_date: "2026-04-18", is_active: false },
-          ];
+          records = DEFAULT_FESTIVAL_OCCASIONS.map((occ) => ({ ...occ })) as unknown as DataRecord[];
+          localStorage.setItem(storageKey, JSON.stringify(records));
+        } else if (this.table === "promo_popups") {
+          records = defaultPromoPopupCards.map((c) => ({ ...c })) as unknown as DataRecord[];
           localStorage.setItem(storageKey, JSON.stringify(records));
         } else if (this.table === "profiles") {
           records = [
@@ -283,7 +307,7 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
 
       if (this.operation === "select") {
         let rows = records.filter((row) =>
-          this.filters.every(({ column, value }) => row[column] === value)
+          this.filters.every(({ column, value }) => String(row[column]) === String(value))
         );
         const totalMatches = rows.length;
         if (this.countOption && this.head) {
@@ -305,19 +329,40 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
         return { data: this.head ? null : rows, error: null, count: this.countOption ? totalMatches : null };
       }
 
-      if (this.operation === "insert") {
+      if (this.operation === "insert" || this.operation === "upsert") {
         const inputs = (Array.isArray(this.values) ? this.values : [this.values]) as DataRecord[];
         for (const input of inputs) {
           const item: DataRecord = {
-            id: String(input.id || Math.random().toString(36).slice(2, 10)),
             created_at: new Date().toISOString(),
             ...input,
+            id: String(input.id || Math.random().toString(36).slice(2, 10)),
           };
-          records.push(item);
+          const existingIdx = records.findIndex((r) => String(r.id) === String(item.id));
+          if (existingIdx >= 0) {
+            records[existingIdx] = {
+              ...records[existingIdx],
+              ...item,
+              updated_at: new Date().toISOString(),
+            };
+          } else {
+            records.push(item);
+          }
         }
         localStorage.setItem(storageKey, JSON.stringify(records));
         if (this.table === "buffalo_listings") {
           notifyBuffaloesUpdated();
+        } else if (this.table === "promo_popups") {
+          try {
+            window.dispatchEvent(new CustomEvent("ak-promo-popups-updated"));
+          } catch {
+            // ignore
+          }
+        } else if (this.table === "festival_settings" || this.table === "festival_occasions") {
+          try {
+            window.dispatchEvent(new CustomEvent("ak_buffalo_festival_sync"));
+          } catch {
+            // ignore
+          }
         }
         return { data: inputs, error: null, count: inputs.length };
       }
@@ -326,7 +371,7 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
         const valObj = this.values as Record<string, unknown>;
         let matched = false;
         records = records.map((item) => {
-          const matches = this.filters.every(({ column, value }) => item[column] === value);
+          const matches = this.filters.every(({ column, value }) => String(item[column]) === String(value));
           if (matches) {
             matched = true;
             return { ...item, ...valObj, updated_at: new Date().toISOString() };
@@ -335,22 +380,46 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
         });
         if (!matched && this.filters.some((f) => f.column === "id")) {
           const idF = this.filters.find((f) => f.column === "id")?.value;
-          records.push({ id: String(idF), ...valObj, created_at: new Date().toISOString() });
+          records.push({ id: String(idF), ...valObj, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
         }
         localStorage.setItem(storageKey, JSON.stringify(records));
         if (this.table === "buffalo_listings") {
           notifyBuffaloesUpdated();
+        } else if (this.table === "promo_popups") {
+          try {
+            window.dispatchEvent(new CustomEvent("ak-promo-popups-updated"));
+          } catch {
+            // ignore
+          }
+        } else if (this.table === "festival_settings" || this.table === "festival_occasions") {
+          try {
+            window.dispatchEvent(new CustomEvent("ak_buffalo_festival_sync"));
+          } catch {
+            // ignore
+          }
         }
         return { data: [valObj as DataRecord], error: null, count: 1 };
       }
 
       if (this.operation === "delete") {
         records = records.filter((item) =>
-          !this.filters.every(({ column, value }) => item[column] === value)
+          !this.filters.every(({ column, value }) => String(item[column]) === String(value))
         );
         localStorage.setItem(storageKey, JSON.stringify(records));
         if (this.table === "buffalo_listings") {
           notifyBuffaloesUpdated();
+        } else if (this.table === "promo_popups") {
+          try {
+            window.dispatchEvent(new CustomEvent("ak-promo-popups-updated"));
+          } catch {
+            // ignore
+          }
+        } else if (this.table === "festival_settings" || this.table === "festival_occasions") {
+          try {
+            window.dispatchEvent(new CustomEvent("ak_buffalo_festival_sync"));
+          } catch {
+            // ignore
+          }
         }
         return { data: [], error: null, count: 0 };
       }

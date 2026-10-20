@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { backend } from "@/lib/backendClient";
 import { useFestivalTheme } from "@/contexts/FestivalThemeContext";
 import {
   CATEGORY_LABELS,
@@ -279,8 +280,24 @@ const FestivalThemeAdminSection = () => {
       return;
     }
     try {
+      await backend.from("promo_popups").upsert({
+        id: `festival-popup-${occ.slug}`,
+        festival_id: occ.id,
+        festival_slug: occ.slug,
+        is_active: checked,
+        is_deleted: false,
+        title_label: `${occ.theme.icon || "✨"} ${occ.name} — Festival Popup Ad`,
+        updated_at: new Date().toISOString(),
+      });
       sessionStorage.removeItem("ak_buffaloes_dismissed_popups_v2");
       window.dispatchEvent(new CustomEvent("ak-promo-popups-updated"));
+      try {
+        const bc = new BroadcastChannel("ak_buffalo_promo_bc");
+        bc.postMessage({ type: "popup_updated" });
+        bc.close();
+      } catch {
+        // ignore BroadcastChannel errors
+      }
     } catch {
       // ignore storage error
     }
@@ -496,7 +513,7 @@ const FestivalThemeAdminSection = () => {
           <div className="flex flex-wrap items-center gap-3">
             <div
               className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border-2 transition-all ${
-                settings.master_enabled
+                Boolean(settings.master_enabled)
                   ? "bg-emerald-500/10 border-emerald-500/40"
                   : "bg-destructive/10 border-destructive/30"
               }`}
@@ -509,14 +526,14 @@ const FestivalThemeAdminSection = () => {
                   Master Toggle: All Automatic Themes
                 </Label>
                 <span className="font-sans text-[11px] text-muted-foreground">
-                  {settings.master_enabled
+                  {Boolean(settings.master_enabled)
                     ? "ON — Enabled occasions activate on their date"
                     : "OFF — Default AK Buffaloes theme locked"}
                 </span>
               </div>
               <Switch
                 id="festival-master-toggle"
-                checked={settings.master_enabled}
+                checked={Boolean(settings.master_enabled)}
                 onCheckedChange={handleMasterToggle}
               />
             </div>
