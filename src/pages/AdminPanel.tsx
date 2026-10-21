@@ -34,7 +34,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import AnalyticsSection from "@/components/AnalyticsSection";
-import { ADMIN_EMAIL, isUserAdmin } from "@/lib/adminAuth";
+import { ADMIN_EMAIL, isUserAdmin, resolveAdminEmail } from "@/lib/adminAuth";
 import { voiceAnnouncer } from "@/lib/voiceAnnouncer";
 import { sound } from "@/lib/soundEffects";
 import { generateFarmReportPDF, type ReportType } from "@/lib/pdfReportGenerator";
@@ -783,7 +783,7 @@ const AdminPanel = () => {
     e.preventDefault();
     setPortalError("");
     const rawEmail = portalEmail.trim();
-    const effectiveEmail = rawEmail.toLowerCase() === "admin" ? ADMIN_EMAIL : rawEmail;
+    const effectiveEmail = resolveAdminEmail(rawEmail);
     if (!effectiveEmail || !portalPassword) {
       setPortalError("Please enter both email and password.");
       return;
@@ -3594,10 +3594,11 @@ const AdminPanel = () => {
             <div>
               <Label className="font-sans text-xs font-medium text-foreground">Admin Email</Label>
               <Input
-                type="email"
+                type="text"
+                inputMode="email"
                 value={portalEmail}
                 onChange={(e) => setPortalEmail(e.target.value)}
-                placeholder="Admin email"
+                placeholder="Admin email or 'admin'"
                 className="mt-1 font-sans text-sm h-11"
                 autoComplete="username"
                 required

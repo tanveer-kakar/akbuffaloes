@@ -9,7 +9,7 @@ import { backend } from "@/lib/backendClient";
 import { LogIn, UserPlus, Shield, Eye, EyeOff, Mail, KeyRound, ArrowLeft, RefreshCw, CheckCircle2 } from "lucide-react";
 import { z } from "zod";
 import { logActivity } from "@/lib/activityLogger";
-import { ADMIN_EMAIL, isUserAdmin } from "@/lib/adminAuth";
+import { ADMIN_EMAIL, isUserAdmin, resolveAdminEmail } from "@/lib/adminAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -77,7 +77,9 @@ const AuthPage = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginErrors({});
-    const result = loginSchema.safeParse({ email: loginEmail, password: loginPassword });
+    const rawEmail = loginEmail.trim();
+    const effectiveEmail = resolveAdminEmail(rawEmail);
+    const result = loginSchema.safeParse({ email: effectiveEmail, password: loginPassword });
     if (!result.success) {
       const errs: Record<string, string> = {};
       result.error.errors.forEach((err) => { errs[err.path[0] as string] = err.message; });
@@ -85,22 +87,10 @@ const AuthPage = () => {
       return;
     }
 
-    // Do not allow admin to log in in the user login place
-    if (isUserAdmin(loginEmail.trim())) {
-      toast({
-        title: "Admin Account Detected",
-        description: "This login is for regular users only. Please use the Admin tab to log in as Administrator.",
-        variant: "destructive",
-      });
-      setAdminEmail(loginEmail.trim());
-      setActiveTab("admin");
-      return;
-    }
-
     setLoginLoading(true);
 
     const { error, isAdmin: userIsAdmin } = await signIn({
-      email: loginEmail.trim(),
+      email: effectiveEmail,
       password: loginPassword,
     });
 
@@ -112,17 +102,13 @@ const AuthPage = () => {
     }
 
     if (userIsAdmin) {
-      await signOut();
-      toast({
-        title: "Admin Account Detected",
-        description: "Administrators must log in via the Admin tab.",
-        variant: "destructive",
-      });
-      setActiveTab("admin");
+      toast({ title: "Welcome, Administrator! 🛡️" });
+      void logActivity({ action: "admin_login", entityType: "auth", details: "Admin logged in" });
+      navigate("/admin", { replace: true });
       return;
     }
 
-    toast({ title: "Welcome back!" });
+    toast({ title: "Welcome back! 🐃" });
     void logActivity({ action: "login", entityType: "auth", details: "User logged in" });
     navigate("/dashboard", { replace: true });
   };
@@ -215,7 +201,7 @@ const AuthPage = () => {
     e.preventDefault();
     setAdminErrors({});
     const rawEmail = adminEmail.trim();
-    const effectiveEmail = rawEmail.toLowerCase() === "admin" ? ADMIN_EMAIL : rawEmail;
+    const effectiveEmail = resolveAdminEmail(rawEmail);
     const result = loginSchema.safeParse({ email: effectiveEmail, password: adminPassword });
     if (!result.success) {
       const errs: Record<string, string> = {};
@@ -503,7 +489,7 @@ const AuthPage = () => {
             </div>
             <form onSubmit={handleAdminLogin} className="space-y-3 sm:space-y-4">
               <div>
-                <Input type="email" placeholder={t("auth.adminEmail")} value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} className="font-sans h-10 sm:h-12 text-sm" maxLength={255} autoComplete="username" />
+                <Input type="text" inputMode="email" placeholder={t("auth.adminEmail")} value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} className="font-sans h-10 sm:h-12 text-sm" maxLength={255} autoComplete="username" />
                 <ErrorText msg={adminErrors.email} />
               </div>
               <div>
