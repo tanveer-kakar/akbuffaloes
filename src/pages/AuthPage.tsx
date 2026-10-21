@@ -77,9 +77,8 @@ const AuthPage = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginErrors({});
-    const rawEmail = loginEmail.trim();
-    const effectiveEmail = resolveAdminEmail(rawEmail);
-    const result = loginSchema.safeParse({ email: effectiveEmail, password: loginPassword });
+    const cleanEmail = loginEmail.trim();
+    const result = loginSchema.safeParse({ email: cleanEmail, password: loginPassword });
     if (!result.success) {
       const errs: Record<string, string> = {};
       result.error.errors.forEach((err) => { errs[err.path[0] as string] = err.message; });
@@ -89,8 +88,8 @@ const AuthPage = () => {
 
     setLoginLoading(true);
 
-    const { error, isAdmin: userIsAdmin } = await signIn({
-      email: effectiveEmail,
+    const { error } = await signIn({
+      email: cleanEmail,
       password: loginPassword,
     });
 
@@ -98,13 +97,6 @@ const AuthPage = () => {
 
     if (error) {
       toast({ title: "Login failed", description: error.message, variant: "destructive" });
-      return;
-    }
-
-    if (userIsAdmin) {
-      toast({ title: "Welcome, Administrator! 🛡️" });
-      void logActivity({ action: "admin_login", entityType: "auth", details: "Admin logged in" });
-      navigate("/admin", { replace: true });
       return;
     }
 

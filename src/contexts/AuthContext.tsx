@@ -42,7 +42,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const current = data.session as BackendSession | null;
       setSession(current);
       setUser(current?.user || null);
-      setIsAdmin(isUserAdmin(current?.user?.email, current?.user?.app_metadata?.role));
+      const activeRole = typeof window !== "undefined" ? localStorage.getItem("ak_active_role") : null;
+      const adminVerified =
+        activeRole === "admin"
+          ? true
+          : activeRole === "user"
+          ? false
+          : isUserAdmin(current?.user?.email, current?.user?.role || current?.user?.app_metadata?.role);
+      setIsAdmin(adminVerified);
     } catch (e) {
       console.error("refreshSession error:", e);
     } finally {
@@ -62,7 +69,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const current = nextSession as BackendSession | null;
       setSession(current);
       setUser(current?.user || null);
-      setIsAdmin(isUserAdmin(current?.user?.email, current?.user?.app_metadata?.role));
+      const activeRole = typeof window !== "undefined" ? localStorage.getItem("ak_active_role") : null;
+      const adminVerified =
+        activeRole === "admin"
+          ? true
+          : activeRole === "user"
+          ? false
+          : isUserAdmin(current?.user?.email, current?.user?.role || current?.user?.app_metadata?.role);
+      setIsAdmin(adminVerified);
       setLoading(false);
     });
 
@@ -76,7 +90,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const creds = typeof credentials === "string" ? { email: credentials, password: passwordArg || "" } : credentials;
     const { data, error } = await backend.auth.signInWithPassword(creds);
     if (!error && data?.user) {
-      const admin = isUserAdmin(data.user.email, data.user.app_metadata?.role);
       const sess: BackendSession = data.session || {
         user: data.user,
         access_token: "cookie-session",
@@ -84,9 +97,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       };
       setSession(sess);
       setUser(data.user);
-      setIsAdmin(admin);
+      setIsAdmin(false);
       setLoading(false);
-      return { error: null, user: data.user, isAdmin: admin };
+      return { error: null, user: data.user, isAdmin: false };
     }
     return {
       error: error ? new Error(error.message) : new Error("Login failed"),

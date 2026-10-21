@@ -443,11 +443,44 @@ const authListeners = new Set<(event: string, session: BackendSession | null) =>
 const auth = {
   async getSession() {
     if (typeof window !== "undefined") {
+      const activeRole = localStorage.getItem("ak_active_role");
+
+      // 1. If explicit active role is user, strictly prioritize user session
+      if (activeRole === "user") {
+        const userStored = localStorage.getItem("ak_user_session");
+        if (userStored) {
+          try {
+            const session = JSON.parse(userStored) as BackendSession;
+            if (session?.user) {
+              return { data: { session }, error: null };
+            }
+          } catch {
+            // Ignore parse errors
+          }
+        }
+      }
+
+      // 2. If explicit active role is admin, strictly prioritize admin session
+      if (activeRole === "admin") {
+        const stored = localStorage.getItem("ak_admin_session");
+        if (stored) {
+          try {
+            const session = JSON.parse(stored) as BackendSession;
+            if (session && session.user && isUserAdmin(session.user.email, session.user.role || session.user.app_metadata?.role)) {
+              return { data: { session }, error: null };
+            }
+          } catch {
+            // Ignore parse errors
+          }
+        }
+      }
+
+      // 3. Fallback if no active role is explicitly saved
       const stored = localStorage.getItem("ak_admin_session");
-      if (stored) {
+      if (stored && activeRole !== "user") {
         try {
           const session = JSON.parse(stored) as BackendSession;
-          if (session && session.user && isUserAdmin(session.user.email)) {
+          if (session && session.user && isUserAdmin(session.user.email, session.user.role || session.user.app_metadata?.role)) {
             if (!isStaticHosting()) {
               void request<never>("/api/auth/session").then((res) => {
                 if (res.user && isUserAdmin(res.user.email)) {
@@ -490,15 +523,10 @@ const auth = {
     return { data: { user: data.session?.user || null }, error };
   },
   async signInWithPassword(credentials: { email: string; password: string }) {
-    const rawEmail = credentials.email.trim();
-    const email = resolveAdminEmail(rawEmail).toLowerCase();
+    const email = credentials.email.trim().toLowerCase();
     const password = credentials.password;
 
     if (isStaticHosting()) {
-      if (isUserAdmin(email) || isUserAdmin(rawEmail)) {
-        const adminRes = this.executeLocalAdminLogin(email, password);
-        if (!adminRes.error) return adminRes;
-      }
       return this.executeLocalUserLogin(email, password);
     }
 
@@ -509,35 +537,27 @@ const auth = {
       });
 
       if (!result.error && result.user) {
-        const session = { user: result.user, access_token: "cookie-session", token_type: "bearer" };
+        const userObj: BackendUser = {
+          ...result.user,
+          role: "user",
+          app_metadata: { ...result.user.app_metadata, role: "user" },
+        };
+        const session = { user: userObj, access_token: "cookie-session", token_type: "bearer" };
         if (typeof window !== "undefined") {
-          if (isUserAdmin(result.user.email)) {
-            localStorage.setItem("ak_admin_session", JSON.stringify(session));
-            localStorage.setItem("ak_admin_email", email);
-            localStorage.removeItem("ak_user_session");
-          } else {
-            localStorage.setItem("ak_user_session", JSON.stringify(session));
-            localStorage.removeItem("ak_admin_session");
-          }
+          localStorage.setItem("ak_user_session", JSON.stringify(session));
+          localStorage.setItem("ak_active_role", "user");
+          localStorage.removeItem("ak_admin_session");
         }
         authListeners.forEach((listener) => listener("SIGNED_IN", session));
-        return { data: { user: result.user, session }, error: null };
+        return { data: { user: userObj, session }, error: null };
       }
 
       if (typeof window !== "undefined") {
-        if (isUserAdmin(email) || isUserAdmin(rawEmail)) {
-          const adminRes = this.executeLocalAdminLogin(email, password);
-          if (!adminRes.error) return adminRes;
-        }
         return this.executeLocalUserLogin(email, password);
       }
       return { data: { user: null, session: null }, error: result.error };
     } catch {
       if (typeof window !== "undefined") {
-        if (isUserAdmin(email) || isUserAdmin(rawEmail)) {
-          const adminRes = this.executeLocalAdminLogin(email, password);
-          if (!adminRes.error) return adminRes;
-        }
         return this.executeLocalUserLogin(email, password);
       }
       return { data: { user: null, session: null }, error: { message: "Login failed" } };
@@ -564,14 +584,20 @@ const auth = {
       });
 
       if (!result.error && result.user) {
-        const session = { user: result.user, access_token: "cookie-session", token_type: "bearer" };
+        const adminUser: BackendUser = {
+          ...result.user,
+          role: "admin",
+          app_metadata: { ...result.user.app_metadata, role: "admin" },
+        };
+        const session = { user: adminUser, access_token: "cookie-session", token_type: "bearer" };
         if (typeof window !== "undefined") {
           localStorage.setItem("ak_admin_session", JSON.stringify(session));
           localStorage.setItem("ak_admin_email", email);
+          localStorage.setItem("ak_active_role", "admin");
           localStorage.removeItem("ak_user_session");
         }
         authListeners.forEach((listener) => listener("SIGNED_IN", session));
-        return { data: { user: result.user, session }, error: null };
+        return { data: { user: adminUser, session }, error: null };
       }
 
       return this.executeLocalAdminLogin(email, password);
@@ -652,6 +678,7 @@ const auth = {
     if (typeof window !== "undefined") {
       localStorage.setItem("ak_admin_session", JSON.stringify(session));
       localStorage.setItem("ak_admin_email", email);
+      localStorage.setItem("ak_active_role", "admin");
       localStorage.removeItem("ak_user_session");
     }
 
@@ -674,13 +701,18 @@ const auth = {
       if (user.password && user.password !== password) {
         return { data: { user: null, session: null }, error: { message: "Invalid email or password." } };
       }
+      user = {
+        ...user,
+        role: "user",
+        app_metadata: { ...user.app_metadata, role: "user" },
+      };
     } else {
       user = {
         id: "user-" + Math.random().toString(36).slice(2, 10),
         email,
         role: "user",
-        app_metadata: { provider: "email" },
-        user_metadata: { full_name: email.split("@")[0], phone: "" },
+        app_metadata: { provider: "email", role: "user" },
+        user_metadata: { full_name: email.split("@")[0], phone: "", role: "user" },
         created_at: new Date().toISOString(),
       };
       users.push({ ...user, password });
@@ -700,6 +732,7 @@ const auth = {
 
     if (typeof window !== "undefined") {
       localStorage.setItem("ak_user_session", JSON.stringify(session));
+      localStorage.setItem("ak_active_role", "user");
       localStorage.removeItem("ak_admin_session");
     }
 
@@ -795,6 +828,7 @@ const auth = {
     if (typeof window !== "undefined") {
       localStorage.removeItem("ak_admin_session");
       localStorage.removeItem("ak_user_session");
+      localStorage.removeItem("ak_active_role");
     }
     if (!isStaticHosting()) {
       void request("/api/auth/logout", { method: "POST", body: "{}" }).catch(() => {});

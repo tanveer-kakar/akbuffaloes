@@ -2,8 +2,6 @@ export const ADMIN_EMAIL = "akbuffaloes540@gmail.com";
 export const ADMIN_EMAILS = [
   ADMIN_EMAIL.toLowerCase(),
   "akbuffaloes786@gmail.com",
-  "tanveerkakar294@gmail.com",
-  "tanveerkakar@gmail.com",
   "admin@akbuffaloes.com",
   "admin@akbuffaloes.in",
   "admin@gmail.com",
@@ -12,8 +10,6 @@ export const ADMIN_EMAILS = [
   "akbuffaloes",
   "akbuffaloes540",
   "akbuffaloes786",
-  "tanveer",
-  "tanveerkakar",
 ];
 
 export const resolveAdminEmail = (input?: string | null): string => {
@@ -25,9 +21,6 @@ export const resolveAdminEmail = (input?: string | null): string => {
   if (clean === "akbuffaloes786") {
     return "akbuffaloes786@gmail.com";
   }
-  if (clean === "tanveerkakar" || clean === "tanveer") {
-    return "tanveerkakar294@gmail.com";
-  }
   if (!clean.includes("@")) {
     return `${clean}@akbuffaloes.com`;
   }
@@ -35,6 +28,8 @@ export const resolveAdminEmail = (input?: string | null): string => {
 };
 
 export const isUserAdmin = (email?: string | null, role?: string | null): boolean => {
+  // Regular user role is strictly never admin
+  if (role === "user") return false;
   if (role === "admin") return true;
   if (!email) return false;
   const clean = email.toLowerCase().trim();
@@ -42,11 +37,7 @@ export const isUserAdmin = (email?: string | null, role?: string | null): boolea
     return true;
   }
   if (ADMIN_EMAILS.includes(clean)) return true;
-  if (
-    clean.startsWith("admin@") ||
-    clean.includes("admin") ||
-    clean.includes("akbuffaloes")
-  ) {
+  if (clean.startsWith("admin@")) {
     return true;
   }
   return false;

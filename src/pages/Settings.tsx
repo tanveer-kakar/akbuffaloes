@@ -283,7 +283,7 @@ const Settings = () => {
     } catch {
       // Backend server unavailable (e.g. Netlify static hosting)
       setRequestingOtp(false);
-      if (user?.email && isUserAdmin(user.email)) {
+      if (user?.email && isUserAdmin(user.email, (user as any).role || user.app_metadata?.role)) {
         localStorage.setItem("ak_admin_password", passwords.newPassword);
       }
       try {
@@ -342,7 +342,7 @@ const Settings = () => {
       toast({ title: "Password Updated Successfully! 🔐", description: "Your account password has been updated." });
     } catch {
       setVerifyingOtp(false);
-      if (user?.email && isUserAdmin(user.email)) {
+      if (user?.email && isUserAdmin(user.email, (user as any).role || user.app_metadata?.role)) {
         localStorage.setItem("ak_admin_password", passwords.newPassword);
       }
       try {
