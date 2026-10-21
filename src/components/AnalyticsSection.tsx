@@ -340,9 +340,27 @@ const AnalyticsSection = ({
       gallery_items: 0,
       users: 0,
     };
-    activityLogs.forEach((log) => {
-      if (counts[log.entity_type] !== undefined) counts[log.entity_type]++;
-      else if (log.entity_type.includes("user")) counts.users++;
+    (activityLogs || []).forEach((log) => {
+      if (!log) return;
+      const rawEntity = log.entity_type;
+      const entity = String(rawEntity ?? "").toLowerCase();
+      if (rawEntity && counts[rawEntity] !== undefined) {
+        counts[rawEntity]++;
+      } else if (counts[entity] !== undefined) {
+        counts[entity]++;
+      } else if (entity.includes("user") || entity.includes("auth") || entity.includes("profile")) {
+        counts.users++;
+      } else if (entity.includes("inquiry") || entity.includes("purchase")) {
+        counts.purchase_inquiries++;
+      } else if (entity.includes("consult")) {
+        counts.consultation_requests++;
+      } else if (entity.includes("contact") || entity.includes("message")) {
+        counts.contact_messages++;
+      } else if (entity.includes("buffalo") || entity.includes("listing")) {
+        counts.buffalo_listings++;
+      } else if (entity.includes("gallery") || entity.includes("photo") || entity.includes("video")) {
+        counts.gallery_items++;
+      }
     });
     return [
       { name: "Purchase Inquiries", count: counts.purchase_inquiries || purchaseInquiries.length },
