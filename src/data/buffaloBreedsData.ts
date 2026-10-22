@@ -521,12 +521,27 @@ export function resolveBuffaloMediaAsset(
   const trimmed = rawUrl.trim();
   if (!trimmed || trimmed === "none" || trimmed === "__none__") return null;
 
-  // 1. Direct or lowercase lookup in ALL_BREED_IMAGES_MAP
-  if (ALL_BREED_IMAGES_MAP[trimmed]) return ALL_BREED_IMAGES_MAP[trimmed];
-  if (ALL_BREED_IMAGES_MAP[trimmed.toLowerCase()]) return ALL_BREED_IMAGES_MAP[trimmed.toLowerCase()];
+  // 1. Custom runtime uploads & remote URLs (Data URIs, blob URLs, live web/CDN URLs, storage URLs)
+  if (
+    trimmed.startsWith("data:") ||
+    trimmed.startsWith("blob:") ||
+    trimmed.startsWith("/api/storage/") ||
+    trimmed.startsWith("/.netlify/") ||
+    ((trimmed.startsWith("http://") || trimmed.startsWith("https://")) &&
+      !trimmed.includes("/src/assets/breeds/"))
+  ) {
+    return trimmed;
+  }
 
-  // 2. Normalized with/without leading slash
-  const withoutSlash = trimmed.replace(/^\/+/, "");
+  // Strip query strings (e.g. cache-busters like ?t=1729609...) before asset mapping
+  const cleanUrl = trimmed.split("?")[0].trim();
+
+  // 2. Direct or lowercase lookup in ALL_BREED_IMAGES_MAP
+  if (ALL_BREED_IMAGES_MAP[cleanUrl]) return ALL_BREED_IMAGES_MAP[cleanUrl];
+  if (ALL_BREED_IMAGES_MAP[cleanUrl.toLowerCase()]) return ALL_BREED_IMAGES_MAP[cleanUrl.toLowerCase()];
+
+  // 3. Normalized with/without leading slash
+  const withoutSlash = cleanUrl.replace(/^\/+/, "");
   if (ALL_BREED_IMAGES_MAP[withoutSlash]) return ALL_BREED_IMAGES_MAP[withoutSlash];
   if (ALL_BREED_IMAGES_MAP[withoutSlash.toLowerCase()]) return ALL_BREED_IMAGES_MAP[withoutSlash.toLowerCase()];
 
@@ -534,8 +549,8 @@ export function resolveBuffaloMediaAsset(
   if (ALL_BREED_IMAGES_MAP[withSlash]) return ALL_BREED_IMAGES_MAP[withSlash];
   if (ALL_BREED_IMAGES_MAP[withSlash.toLowerCase()]) return ALL_BREED_IMAGES_MAP[withSlash.toLowerCase()];
 
-  // 3. Keyword/token fallback for paths, hashes, or old build assets
-  const cleanLower = trimmed.toLowerCase();
+  // 4. Keyword/token fallback ONLY for local bundled asset paths or build hashes
+  const cleanLower = cleanUrl.toLowerCase();
   if (cleanLower.includes("jaffarabadi2") || cleanLower.includes("jaffarabadi4")) return jaffarabadi2;
   if (cleanLower.includes("jaffarabadi")) return jaffarabadi1;
   if (cleanLower.includes("nili") && (cleanLower.includes("2") || cleanLower.includes("4"))) return niliRavi2;
@@ -556,16 +571,6 @@ export function resolveBuffaloMediaAsset(
   if (cleanLower.includes("bhadawari")) return bhadawari1;
   if (cleanLower.includes("godavari") && cleanLower.includes("2")) return godavari2;
   if (cleanLower.includes("godavari")) return godavari1;
-
-  // 4. Custom runtime uploads (Base64 data URIs, blob URLs, or live CDN URLs)
-  if (
-    trimmed.startsWith("data:") ||
-    trimmed.startsWith("blob:") ||
-    (trimmed.startsWith("http://") && !trimmed.includes("/src/assets/")) ||
-    (trimmed.startsWith("https://") && !trimmed.includes("/src/assets/"))
-  ) {
-    return trimmed;
-  }
 
   // 5. Fallback to breed meta
   const meta = getBreedMetaByNameOrSlug(breedName);
@@ -1651,7 +1656,7 @@ export function getMergedBreedCatalog(
           calf_details: dbOverride.calf_details || def.calf_details,
           health_records: dbOverride.health_records || def.health_records,
           video_url: dbOverride.video_url !== undefined ? dbOverride.video_url : def.video_url,
-          image_url: dbOverride.image_url || def.image_url,
+          image_url: dbOverride.image_url !== undefined ? dbOverride.image_url : def.image_url,
           extra_images: dbOverride.extra_images !== undefined ? dbOverride.extra_images : def.extra_images,
           description: dbOverride.description !== undefined ? dbOverride.description : def.description,
           is_new_stock: false,
@@ -1783,7 +1788,7 @@ export function getMergedNewStocks(
           calf_details: dbOverride.calf_details || def.calf_details,
           health_records: dbOverride.health_records || def.health_records,
           video_url: dbOverride.video_url !== undefined ? dbOverride.video_url : def.video_url,
-          image_url: dbOverride.image_url || def.image_url,
+          image_url: dbOverride.image_url !== undefined ? dbOverride.image_url : def.image_url,
           extra_images: dbOverride.extra_images !== undefined ? dbOverride.extra_images : def.extra_images,
           description: dbOverride.description !== undefined ? dbOverride.description : def.description,
           is_new_stock: true,

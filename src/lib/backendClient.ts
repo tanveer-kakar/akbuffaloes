@@ -219,6 +219,9 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
           if (matchingCanonical) {
             if (!item.image_url || typeof item.image_url !== "string" || item.image_url.includes("undefined")) {
               item.image_url = matchingCanonical.image_url;
+              changed = true;
+            }
+            if (!item.extra_images || !Array.isArray(item.extra_images)) {
               item.extra_images = matchingCanonical.extra_images;
               changed = true;
             }
@@ -934,6 +937,65 @@ const auth = {
   },
 };
 
+export const compressImageFile = async (
+  file: File,
+  maxWidth = 1200,
+  quality = 0.82
+): Promise<string> => {
+  if (typeof window === "undefined" || !file) return "";
+  if (!file.type.startsWith("image/") || file.type.includes("svg") || file.type.includes("gif")) {
+    return new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve((reader.result as string) || "");
+      reader.onerror = () => resolve("");
+      reader.readAsDataURL(file);
+    });
+  }
+
+  return new Promise<string>((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const rawDataUrl = (e.target?.result as string) || "";
+      if (!rawDataUrl) {
+        resolve("");
+        return;
+      }
+      try {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            let width = img.width || 800;
+            let height = img.height || 600;
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+              resolve(rawDataUrl);
+              return;
+            }
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressed = canvas.toDataURL("image/jpeg", quality);
+            resolve(compressed || rawDataUrl);
+          } catch {
+            resolve(rawDataUrl);
+          }
+        };
+        img.onerror = () => resolve(rawDataUrl);
+        img.src = rawDataUrl;
+      } catch {
+        resolve(rawDataUrl);
+      }
+    };
+    reader.onerror = () => resolve("");
+    reader.readAsDataURL(file);
+  });
+};
+
 const storageUrlCache = new Map<string, string>();
 
 export const backend = {
@@ -964,27 +1026,25 @@ export const backend = {
   storage: {
     from: (bucket: string) => ({
       upload: async (filePath: string, file: File, _options?: { upsert?: boolean }) => {
-        let dataUrl = "";
-        // Only generate base64 dataUrl for small files (<= 200KB) to prevent localStorage quota crashes
-        if (file.size <= 200 * 1024) {
-          try {
-            dataUrl = await new Promise<string>((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result as string);
-              reader.onerror = reject;
-              reader.readAsDataURL(file);
-            });
-          } catch {
-            // Ignore FileReader error
+        let persistentUrl = "";
+        if (file.type.startsWith("image/")) {
+          persistentUrl = await compressImageFile(file, 1200, 0.82);
+        } else {
+          if (file.size <= 500 * 1024) {
+            try {
+              persistentUrl = await new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve((reader.result as string) || "");
+                reader.onerror = () => resolve("");
+                reader.readAsDataURL(file);
+              });
+            } catch {
+              // ignore
+            }
           }
-        }
-
-        const objectUrl = typeof URL !== "undefined" && typeof URL.createObjectURL === "function" ? URL.createObjectURL(file) : "";
-        const finalUrl = dataUrl || objectUrl;
-
-        if (isStaticHosting()) {
-          storageUrlCache.set(`${bucket}:${filePath}`, finalUrl);
-          return { data: { path: filePath, publicUrl: finalUrl }, error: null };
+          if (!persistentUrl && typeof URL !== "undefined" && typeof URL.createObjectURL === "function") {
+            persistentUrl = URL.createObjectURL(file);
+          }
         }
 
         try {
@@ -1003,11 +1063,11 @@ export const backend = {
             return { data: { path: result.path, publicUrl: remoteUrl }, error: null };
           }
         } catch {
-          // Fall back to local dataUrl / objectUrl
+          // Fall back to persistentUrl
         }
 
-        storageUrlCache.set(`${bucket}:${filePath}`, finalUrl);
-        return { data: { path: filePath, publicUrl: finalUrl }, error: null };
+        storageUrlCache.set(`${bucket}:${filePath}`, persistentUrl);
+        return { data: { path: filePath, publicUrl: persistentUrl }, error: null };
       },
       getPublicUrl: (filePath: string) => {
         if (!filePath) return { data: { publicUrl: "" } };
