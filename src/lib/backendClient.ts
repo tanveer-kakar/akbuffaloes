@@ -4,6 +4,7 @@ import {
   DEFAULT_NEW_STOCK_PROFILES,
   notifyBuffaloesUpdated,
 } from "@/data/buffaloBreedsData";
+import { pushCloudSync, pullCloudSync } from "@/lib/cloudSync";
 import { galleryItems } from "@/data/galleryData";
 import {
   DEFAULT_FESTIVAL_OCCASIONS,
@@ -96,9 +97,6 @@ export const isServerUnavailable = (msg?: string) => {
 };
 
 const request = async <T>(path: string, init?: RequestInit): Promise<ApiResponse<T>> => {
-  if (isStaticHosting()) {
-    return { error: { message: "Static hosting offline fallback" } };
-  }
   try {
     const response = await fetch(resolveApiUrl(path), {
       ...init,
@@ -172,9 +170,6 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
     return this.execute().then(onfulfilled, onrejected);
   }
   private async execute(): Promise<BackendResult<DataRecord[] | null>> {
-    if (isStaticHosting()) {
-      return this.executeLocalFallback();
-    }
     const result = await request<DataRecord[]>("/api/data", {
       method: "POST",
       body: JSON.stringify({
@@ -188,6 +183,13 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
         return this.executeLocalFallback();
       }
       return { data: null, error: result.error, count: null };
+    }
+    if (typeof window !== "undefined" && !this.head && Array.isArray(result.data) && this.operation === "select") {
+      try {
+        localStorage.setItem(`ak_offline_${this.table}`, JSON.stringify(result.data));
+      } catch {
+        // ignore storage errors
+      }
     }
     return { data: this.head ? null : result.data || [], error: null, count: result.count ?? null };
   }
@@ -215,13 +217,6 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
             (p) => p.stock_code === item.stock_code || p.id === item.id
           );
           if (matchingCanonical) {
-            if (item.breed !== matchingCanonical.breed) {
-              item.breed = matchingCanonical.breed;
-              item.name = matchingCanonical.name;
-              item.subtitle_label = matchingCanonical.subtitle_label;
-              item.description = matchingCanonical.description;
-              changed = true;
-            }
             if (!item.image_url || typeof item.image_url !== "string" || item.image_url.includes("undefined")) {
               item.image_url = matchingCanonical.image_url;
               item.extra_images = matchingCanonical.extra_images;
@@ -326,6 +321,9 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
         if (Number.isInteger(this.rowLimit)) {
           rows = rows.slice(0, this.rowLimit);
         }
+        if (typeof window !== "undefined") {
+          void pullCloudSync(this.table);
+        }
         return { data: this.head ? null : rows, error: null, count: this.countOption ? totalMatches : null };
       }
 
@@ -349,6 +347,7 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
           }
         }
         localStorage.setItem(storageKey, JSON.stringify(records));
+        void pushCloudSync(this.table, records);
         if (this.table === "buffalo_listings") {
           notifyBuffaloesUpdated();
         } else if (this.table === "promo_popups") {
@@ -383,6 +382,7 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
           records.push({ id: String(idF), ...valObj, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
         }
         localStorage.setItem(storageKey, JSON.stringify(records));
+        void pushCloudSync(this.table, records);
         if (this.table === "buffalo_listings") {
           notifyBuffaloesUpdated();
         } else if (this.table === "promo_popups") {
@@ -406,6 +406,7 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
           !this.filters.every(({ column, value }) => String(item[column]) === String(value))
         );
         localStorage.setItem(storageKey, JSON.stringify(records));
+        void pushCloudSync(this.table, records);
         if (this.table === "buffalo_listings") {
           notifyBuffaloesUpdated();
         } else if (this.table === "promo_popups") {

@@ -1580,13 +1580,7 @@ export function mergeDbWithLiveOverrides(
     if (!existing) {
       mergedMap.set(id, { ...override, id });
     } else {
-      const dbTime = existing.updated_at ? Date.parse(existing.updated_at) : 0;
-      const localTime = override.updated_at ? Date.parse(override.updated_at) : 0;
-      if (localTime >= dbTime) {
-        mergedMap.set(id, { ...existing, ...override, id });
-      } else {
-        mergedMap.set(id, { ...override, ...existing, id });
-      }
+      mergedMap.set(id, { ...existing, ...override, id });
     }
   }
 
@@ -1642,12 +1636,24 @@ export function getMergedBreedCatalog(
       ? {
           ...def,
           ...dbOverride,
-          // Always pin identity fields from the canonical default — never let DB/live override corrupt them
           id: def.id,
-          stock_code: def.stock_code,
-          name: def.name,
-          subtitle_label: def.subtitle_label,
-          breed: def.breed,
+          stock_code: dbOverride.stock_code || def.stock_code,
+          name: dbOverride.name || def.name,
+          subtitle_label: dbOverride.subtitle_label || def.subtitle_label,
+          breed: dbOverride.breed || def.breed,
+          price: dbOverride.price !== undefined && dbOverride.price !== null ? Number(dbOverride.price) : def.price,
+          is_negotiable: dbOverride.is_negotiable !== undefined ? Boolean(dbOverride.is_negotiable) : def.is_negotiable,
+          age: dbOverride.age || def.age,
+          weight: dbOverride.weight || def.weight,
+          milk_yield: dbOverride.milk_yield || def.milk_yield,
+          lactation: dbOverride.lactation || def.lactation,
+          pregnancy_status: dbOverride.pregnancy_status || def.pregnancy_status,
+          calf_details: dbOverride.calf_details || def.calf_details,
+          health_records: dbOverride.health_records || def.health_records,
+          video_url: dbOverride.video_url !== undefined ? dbOverride.video_url : def.video_url,
+          image_url: dbOverride.image_url || def.image_url,
+          extra_images: dbOverride.extra_images !== undefined ? dbOverride.extra_images : def.extra_images,
+          description: dbOverride.description !== undefined ? dbOverride.description : def.description,
           is_new_stock: false,
           status:
             dbOverride.status ||
@@ -1762,12 +1768,24 @@ export function getMergedNewStocks(
       ? {
           ...def,
           ...dbOverride,
-          // Always pin identity fields from the canonical default
           id: def.id,
-          stock_code: def.stock_code,
-          name: def.name,
-          subtitle_label: def.subtitle_label,
-          breed: def.breed,
+          stock_code: dbOverride.stock_code || def.stock_code,
+          name: dbOverride.name || def.name,
+          subtitle_label: dbOverride.subtitle_label || def.subtitle_label,
+          breed: dbOverride.breed || def.breed,
+          price: dbOverride.price !== undefined && dbOverride.price !== null ? Number(dbOverride.price) : def.price,
+          is_negotiable: dbOverride.is_negotiable !== undefined ? Boolean(dbOverride.is_negotiable) : def.is_negotiable,
+          age: dbOverride.age || def.age,
+          weight: dbOverride.weight || def.weight,
+          milk_yield: dbOverride.milk_yield || def.milk_yield,
+          lactation: dbOverride.lactation || def.lactation,
+          pregnancy_status: dbOverride.pregnancy_status || def.pregnancy_status,
+          calf_details: dbOverride.calf_details || def.calf_details,
+          health_records: dbOverride.health_records || def.health_records,
+          video_url: dbOverride.video_url !== undefined ? dbOverride.video_url : def.video_url,
+          image_url: dbOverride.image_url || def.image_url,
+          extra_images: dbOverride.extra_images !== undefined ? dbOverride.extra_images : def.extra_images,
+          description: dbOverride.description !== undefined ? dbOverride.description : def.description,
           is_new_stock: true,
           status:
             dbOverride.status ||

@@ -69,6 +69,7 @@ import {
   getDefaultBreedImagePath,
   isLegacySampleRecord,
   mergeDbWithLiveOverrides,
+  readBuffaloDeletedIds,
   removeBuffaloLiveOverride,
   resolveAdminBuffaloThumb,
   resolveBuffaloImage,
@@ -895,8 +896,11 @@ const AdminPanel = () => {
       const rawBuffaloes = allRawBuffaloes.filter((item) => !isLegacySampleRecord(item));
       const missingNewRecords: BuffaloListingAdmin[] = [];
 
-      // 1. Ensure all 8 Default New Stock arrivals (AKB-001 .. AKB-008) exist in Admin Panel & DB
+      const deletedIds = readBuffaloDeletedIds();
+
+      // 1. Ensure all 8 Default New Stock arrivals (AKB-001 .. AKB-008) exist in Admin Panel & DB unless deleted
       for (const newStockDef of DEFAULT_NEW_STOCK_PROFILES) {
+        if (deletedIds.has(newStockDef.id)) continue;
         const exists = rawBuffaloes.some(
           (item) => item.id === newStockDef.id || (newStockDef.stock_code && item.stock_code === newStockDef.stock_code)
         );
@@ -908,8 +912,9 @@ const AdminPanel = () => {
         }
       }
 
-      // 2. Ensure all 10 Default Breed Catalog profiles (BRD-001 .. BRD-010) exist in Admin Panel & DB
+      // 2. Ensure all 10 Default Breed Catalog profiles (BRD-001 .. BRD-010) exist in Admin Panel & DB unless deleted
       for (const breedCatalogDef of DEFAULT_BREED_CATALOG_PROFILES) {
+        if (deletedIds.has(breedCatalogDef.id)) continue;
         const exists = rawBuffaloes.some(
           (item) =>
             item.id === breedCatalogDef.id ||
@@ -941,12 +946,19 @@ const AdminPanel = () => {
           return {
             ...enriched,
             ...item,
+            name: item.name || enriched.name,
+            breed: item.breed || enriched.breed,
             stock_code: item.stock_code || enriched.stock_code,
             subtitle_label: item.subtitle_label || enriched.subtitle_label,
+            price: item.price !== undefined && item.price !== null ? Number(item.price) : enriched.price,
+            age: item.age || enriched.age,
+            weight: item.weight || enriched.weight,
+            milk_yield: item.milk_yield || enriched.milk_yield,
             lactation: item.lactation || enriched.lactation,
             pregnancy_status: item.pregnancy_status || enriched.pregnancy_status,
             calf_details: item.calf_details || enriched.calf_details,
             health_records: item.health_records || enriched.health_records,
+            description: item.description !== undefined ? item.description : enriched.description,
             video_url:
               item.video_url === null || item.video_url === "" || item.video_url === "none" || item.video_url === "__none__"
                 ? null
@@ -954,7 +966,7 @@ const AdminPanel = () => {
                 ? item.video_url
                 : enriched.video_url,
             is_negotiable: item.is_negotiable ?? enriched.is_negotiable,
-            is_new_stock: enriched.is_new_stock,
+            is_new_stock: item.is_new_stock !== undefined ? Boolean(item.is_new_stock) : enriched.is_new_stock,
             status: resolvedStatus,
             is_available: resolvedAvailable,
           };
