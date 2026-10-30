@@ -48,6 +48,18 @@ const resolveApiUrl = (path: string) =>
 export const isStaticHosting = () => {
   if (typeof window === "undefined") return false;
   const h = window.location.hostname;
+  // Local network / IP hostnames are development, NOT static hosting!
+  if (
+    h === "localhost" ||
+    h === "127.0.0.1" ||
+    h === "::1" ||
+    h.startsWith("192.168.") ||
+    h.startsWith("10.") ||
+    h.startsWith("172.") ||
+    h.endsWith(".local")
+  ) {
+    return false;
+  }
   const apiUrl = String(import.meta.env?.VITE_API_BASE_URL || import.meta.env?.VITE_API_URL || "").trim();
   const hasExternalApi = Boolean(
     apiUrl &&
@@ -65,7 +77,7 @@ export const isStaticHosting = () => {
   ) {
     return true;
   }
-  return h !== "localhost" && h !== "127.0.0.1";
+  return false;
 };
 
 export const isServerUnavailable = (msg?: string) => {
@@ -98,10 +110,30 @@ export const isServerUnavailable = (msg?: string) => {
 
 const request = async <T>(path: string, init?: RequestInit): Promise<ApiResponse<T>> => {
   try {
+    const authHeaders: Record<string, string> = {};
+    if (typeof window !== "undefined") {
+      try {
+        const storedAdmin = localStorage.getItem("ak_admin_session");
+        if (storedAdmin) {
+          const parsedAdmin = JSON.parse(storedAdmin);
+          const email = parsedAdmin?.user?.email;
+          if (email) {
+            authHeaders["Authorization"] = `Admin ${email}`;
+          }
+        }
+      } catch {
+        // ignore storage errors
+      }
+    }
+
     const response = await fetch(resolveApiUrl(path), {
       ...init,
       credentials: "include",
-      headers: { "Content-Type": "application/json", ...init?.headers },
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders,
+        ...init?.headers,
+      },
     });
 
     const contentType = response.headers.get("content-type") || "";
@@ -349,9 +381,28 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
             records.push(item);
           }
         }
-        localStorage.setItem(storageKey, JSON.stringify(records));
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(records));
+        } catch {
+          // ignore quota
+        }
         void pushCloudSync(this.table, records);
         if (this.table === "buffalo_listings") {
+          try {
+            const liveRaw = localStorage.getItem("ak_buffaloes_live_overrides_v1");
+            const liveMap = liveRaw ? JSON.parse(liveRaw) : {};
+            for (const item of records) {
+              if (item && item.id) {
+                liveMap[String(item.id)] = {
+                  ...(liveMap[String(item.id)] || {}),
+                  ...item,
+                };
+              }
+            }
+            localStorage.setItem("ak_buffaloes_live_overrides_v1", JSON.stringify(liveMap));
+          } catch {
+            // ignore
+          }
           notifyBuffaloesUpdated();
         } else if (this.table === "promo_popups") {
           try {
@@ -384,9 +435,28 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
           const idF = this.filters.find((f) => f.column === "id")?.value;
           records.push({ id: String(idF), ...valObj, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
         }
-        localStorage.setItem(storageKey, JSON.stringify(records));
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(records));
+        } catch {
+          // ignore quota
+        }
         void pushCloudSync(this.table, records);
         if (this.table === "buffalo_listings") {
+          try {
+            const liveRaw = localStorage.getItem("ak_buffaloes_live_overrides_v1");
+            const liveMap = liveRaw ? JSON.parse(liveRaw) : {};
+            for (const item of records) {
+              if (item && item.id) {
+                liveMap[String(item.id)] = {
+                  ...(liveMap[String(item.id)] || {}),
+                  ...item,
+                };
+              }
+            }
+            localStorage.setItem("ak_buffaloes_live_overrides_v1", JSON.stringify(liveMap));
+          } catch {
+            // ignore
+          }
           notifyBuffaloesUpdated();
         } else if (this.table === "promo_popups") {
           try {
@@ -408,9 +478,28 @@ class DataQuery implements PromiseLike<BackendResult<DataRecord[] | null>> {
         records = records.filter((item) =>
           !this.filters.every(({ column, value }) => String(item[column]) === String(value))
         );
-        localStorage.setItem(storageKey, JSON.stringify(records));
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(records));
+        } catch {
+          // ignore quota
+        }
         void pushCloudSync(this.table, records);
         if (this.table === "buffalo_listings") {
+          try {
+            const liveRaw = localStorage.getItem("ak_buffaloes_live_overrides_v1");
+            const liveMap = liveRaw ? JSON.parse(liveRaw) : {};
+            for (const item of records) {
+              if (item && item.id) {
+                liveMap[String(item.id)] = {
+                  ...(liveMap[String(item.id)] || {}),
+                  ...item,
+                };
+              }
+            }
+            localStorage.setItem("ak_buffaloes_live_overrides_v1", JSON.stringify(liveMap));
+          } catch {
+            // ignore
+          }
           notifyBuffaloesUpdated();
         } else if (this.table === "promo_popups") {
           try {
@@ -939,8 +1028,8 @@ const auth = {
 
 export const compressImageFile = async (
   file: File,
-  maxWidth = 1200,
-  quality = 0.82
+  maxWidth = 960,
+  quality = 0.72
 ): Promise<string> => {
   if (typeof window === "undefined" || !file) return "";
   if (!file.type.startsWith("image/") || file.type.includes("svg") || file.type.includes("gif")) {
@@ -1028,7 +1117,7 @@ export const backend = {
       upload: async (filePath: string, file: File, _options?: { upsert?: boolean }) => {
         let persistentUrl = "";
         if (file.type.startsWith("image/")) {
-          persistentUrl = await compressImageFile(file, 1200, 0.82);
+          persistentUrl = await compressImageFile(file, 960, 0.72);
         } else {
           if (file.size <= 500 * 1024) {
             try {

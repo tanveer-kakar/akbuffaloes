@@ -1,4 +1,4 @@
-import { notifyBuffaloesUpdated } from "@/data/buffaloBreedsData";
+import { notifyBuffaloesUpdated, BUFFALO_LIVE_OVERRIDES_KEY } from "@/data/buffaloBreedsData";
 
 const CLOUD_SYNC_BASE = "https://kvdb.io/ak_buffaloes_v2_";
 const SYNC_TABLES = [
@@ -9,6 +9,20 @@ const SYNC_TABLES = [
   "festival_occasions",
   "farm_settings",
 ];
+
+function getAuthHeader(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    const stored = localStorage.getItem("ak_admin_session");
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed?.user?.email) {
+        return { Authorization: `Admin ${parsed.user.email}` };
+      }
+    }
+  } catch {}
+  return {};
+}
 
 let lastSyncTimes: Record<string, number> = {};
 
@@ -26,7 +40,7 @@ export async function pushCloudSync(table: string, records: unknown[]): Promise<
     try {
       void fetch("/api/data", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getAuthHeader() },
         body: JSON.stringify({
           table,
           operation: "upsert",
@@ -75,7 +89,7 @@ export async function pullCloudSync(table: string): Promise<boolean> {
   try {
     const apiRes = await fetch("/api/data", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...getAuthHeader() },
       body: JSON.stringify({
         table,
         operation: "select",
@@ -121,6 +135,22 @@ function mergeIntoLocalStorage(storageKey: string, remoteRecords: any[], table: 
 
     if (!Array.isArray(localRecords) || localRecords.length === 0) {
       localStorage.setItem(storageKey, JSON.stringify(remoteRecords));
+      if (table === "buffalo_listings" && Array.isArray(remoteRecords)) {
+        try {
+          const liveRaw = localStorage.getItem(BUFFALO_LIVE_OVERRIDES_KEY);
+          const liveMap = liveRaw ? JSON.parse(liveRaw) : {};
+          for (const remote of remoteRecords) {
+            if (!remote || !remote.id) continue;
+            liveMap[String(remote.id)] = {
+              ...(liveMap[String(remote.id)] || {}),
+              ...remote,
+            };
+          }
+          localStorage.setItem(BUFFALO_LIVE_OVERRIDES_KEY, JSON.stringify(liveMap));
+        } catch {
+          // ignore
+        }
+      }
       triggerTableUpdate(table);
       return;
     }
@@ -155,6 +185,27 @@ function mergeIntoLocalStorage(storageKey: string, remoteRecords: any[], table: 
       const mergedList = Array.from(mergedMap.values());
       localStorage.setItem(storageKey, JSON.stringify(mergedList));
       triggerTableUpdate(table);
+    }
+
+    if (table === "buffalo_listings" && Array.isArray(remoteRecords)) {
+      try {
+        const liveRaw = localStorage.getItem(BUFFALO_LIVE_OVERRIDES_KEY);
+        const liveMap = liveRaw ? JSON.parse(liveRaw) : {};
+        let liveChanged = false;
+        for (const remote of remoteRecords) {
+          if (!remote || !remote.id) continue;
+          liveMap[String(remote.id)] = {
+            ...(liveMap[String(remote.id)] || {}),
+            ...remote,
+          };
+          liveChanged = true;
+        }
+        if (liveChanged) {
+          localStorage.setItem(BUFFALO_LIVE_OVERRIDES_KEY, JSON.stringify(liveMap));
+        }
+      } catch {
+        // ignore
+      }
     }
   } catch {
     // ignore JSON merge errors

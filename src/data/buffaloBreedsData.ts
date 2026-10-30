@@ -1440,9 +1440,28 @@ export function readBuffaloLiveOverrides(): Record<
   if (typeof window === "undefined") return {};
   try {
     const raw = window.localStorage.getItem(BUFFALO_LIVE_OVERRIDES_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : {};
+    const parsed = raw ? JSON.parse(raw) : {};
+    const result: Record<string, Partial<NewStockBuffaloRecord> & { id: string; updated_at?: string }> =
+      parsed && typeof parsed === "object" ? parsed : {};
+
+    // Also blend ak_offline_buffalo_listings if any entries exist
+    try {
+      const offlineRaw = window.localStorage.getItem("ak_offline_buffalo_listings");
+      if (offlineRaw) {
+        const offlineParsed = JSON.parse(offlineRaw);
+        if (Array.isArray(offlineParsed)) {
+          for (const item of offlineParsed) {
+            if (item && item.id && !result[item.id]) {
+              result[item.id] = { ...item };
+            }
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    return result;
   } catch {
     return {};
   }
@@ -1505,16 +1524,13 @@ export function saveBuffaloLiveOverride(
     }
   } catch {
     try {
-      // If storage quota exceeded, prune any oversized data URIs (> 100KB) and re-save safely
+      // If storage quota exceeded, prune any oversized raw video data and keep record intact
       const existing = readBuffaloLiveOverrides();
       const cleaned: Record<string, Partial<NewStockBuffaloRecord> & { id: string; updated_at?: string }> = {};
       for (const [k, v] of Object.entries(existing)) {
         const item = { ...v };
-        if (typeof item.video_url === "string" && item.video_url.length > 100000) {
+        if (typeof item.video_url === "string" && item.video_url.length > 250000) {
           item.video_url = null;
-        }
-        if (typeof item.image_url === "string" && item.image_url.length > 100000) {
-          item.image_url = "";
         }
         cleaned[k] = item;
       }
@@ -1523,7 +1539,7 @@ export function saveBuffaloLiveOverride(
         ...record,
         updated_at: new Date().toISOString(),
       };
-      if (typeof cleaned[record.id].video_url === "string" && (cleaned[record.id].video_url as string).length > 100000) {
+      if (typeof cleaned[record.id].video_url === "string" && (cleaned[record.id].video_url as string).length > 250000) {
         cleaned[record.id].video_url = null;
       }
       window.localStorage.setItem(BUFFALO_LIVE_OVERRIDES_KEY, JSON.stringify(cleaned));

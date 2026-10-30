@@ -46,6 +46,7 @@ export const PromoPopupCardView = ({
   isPreview = false,
 }: PromoPopupCardViewProps) => {
   const shortDisplayUrl = useMemo(() => {
+    if (!card.link_url) return "https://akbuffaloes.com";
     try {
       const u = new URL(card.link_url);
       return `${u.origin}${u.pathname}`;
@@ -54,7 +55,7 @@ export const PromoPopupCardView = ({
     }
   }, [card.link_url]);
 
-  const isInternalLink = card.link_url.startsWith("/");
+  const isInternalLink = (card.link_url || "").startsWith("/");
   const isFestivalCard = Boolean(card.festival_id || card.festival_icon);
 
   const primaryColor = card.festival_primary_color || "#D97706";

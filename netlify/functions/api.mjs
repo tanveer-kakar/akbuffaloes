@@ -116,13 +116,26 @@ export const handler = async (event) => {
     // UPDATE
     if (operation === "update") {
       const valObj = values || {};
+      let matched = false;
       records = records.map((item) => {
-        const matches = Array.isArray(filters) && filters.every(({ column, value }) => String(item[column]) === String(value));
-        if (matches) {
+        const isMatch = Array.isArray(filters) && filters.length > 0 && filters.every(({ column, value }) => String(item[column]) === String(value));
+        if (isMatch) {
+          matched = true;
           return { ...item, ...valObj, updated_at: new Date().toISOString() };
         }
         return item;
       });
+      if (!matched) {
+        const idFilter = Array.isArray(filters) ? filters.find((f) => f.column === "id")?.value : null;
+        if (idFilter || valObj.id) {
+          records.push({
+            id: String(idFilter || valObj.id),
+            ...valObj,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+        }
+      }
       db[table] = records;
       writeDb(db);
       return {

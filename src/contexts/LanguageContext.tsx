@@ -666,12 +666,25 @@ export const languageNames: Record<Language, string> = {
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguageState] = useState<Language>(() => {
-    return (localStorage.getItem("app_language") as Language) || "en";
+    try {
+      if (typeof window !== "undefined") {
+        return (localStorage.getItem("app_language") as Language) || "en";
+      }
+    } catch {
+      // private browsing or storage disabled
+    }
+    return "en";
   });
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem("app_language", lang);
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("app_language", lang);
+      }
+    } catch {
+      // ignore
+    }
   };
 
   const t = (key: string): string => {

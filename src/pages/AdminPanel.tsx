@@ -965,6 +965,8 @@ const AdminPanel = () => {
                 : item.video_url !== undefined
                 ? item.video_url
                 : enriched.video_url,
+            image_url: item.image_url !== undefined ? item.image_url : enriched.image_url,
+            extra_images: Array.isArray(item.extra_images) ? item.extra_images : enriched.extra_images,
             is_negotiable: item.is_negotiable ?? enriched.is_negotiable,
             is_new_stock: item.is_new_stock !== undefined ? Boolean(item.is_new_stock) : enriched.is_new_stock,
             status: resolvedStatus,
